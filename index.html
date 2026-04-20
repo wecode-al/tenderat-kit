@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="al">
+<head>
+<meta charset="utf-8">
+<title>Tenderat — UI Kit</title>
+<meta name="viewport" content="width=1280">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="krijo-dosje.css?v=16">
+<link rel="stylesheet" href="dossier-detail.css?v=7">
+<link rel="stylesheet" href="add-doc-drawer.css?v=4">
+<link rel="stylesheet" href="company-profile.css?v=17">
+<link rel="stylesheet" href="login.css">
+<link rel="stylesheet" href="forgot-password.css">
+<link rel="stylesheet" href="register.css">
+<link rel="stylesheet" href="first-login.css">
+<style>
+  /* Screen switcher (kit-level chrome, not part of the product).
+     Compact bottom-left pill that opens a dropdown menu. */
+  .t-kit-switcher {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    z-index: 100;
+    font-family: var(--t-font-ui);
+  }
+  .t-kit-switcher-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 8px 10px;
+    background: rgba(17,24,39,0.92);
+    color: #E2E8F0;
+    border: 0;
+    border-radius: 9999px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    backdrop-filter: blur(10px);
+    font: 500 12px/1 var(--t-font-ui);
+    cursor: pointer;
+  }
+  .t-kit-switcher-btn:hover { color: white; }
+  .t-kit-switcher-dot {
+    width: 6px; height: 6px;
+    border-radius: 9999px;
+    background: var(--t-brand);
+    flex: none;
+  }
+  .t-kit-switcher-caret {
+    font-size: 16px !important;
+    color: #94A3B8;
+    margin-left: 2px;
+  }
+  .t-kit-switcher-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    min-width: 180px;
+    padding: 6px;
+    background: rgba(17,24,39,0.96);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .t-kit-switcher-menu button {
+    background: transparent;
+    border: 0;
+    color: #E2E8F0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font: 500 12px/1 var(--t-font-ui);
+    cursor: pointer;
+    text-align: left;
+  }
+  .t-kit-switcher-menu button.is-on {
+    background: var(--t-brand);
+    color: white;
+    font-weight: 700;
+  }
+  .t-kit-switcher-menu button:hover:not(.is-on) {
+    background: rgba(255,255,255,0.08);
+    color: white;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="AppHeader.jsx"></script>
+<script type="text/babel" src="Button.jsx"></script>
+<script type="text/babel" src="Field.jsx"></script>
+<script type="text/babel" src="DossierCard.jsx"></script>
+<script type="text/babel" src="DocumentRow.jsx"></script>
+<script type="text/babel" src="BrowserChrome.jsx"></script>
+<script type="text/babel" src="LoginScreen.jsx"></script>
+<script type="text/babel" src="ForgotPassword.jsx"></script>
+<script type="text/babel" src="Register.jsx"></script>
+<script type="text/babel" src="DashboardEmpty.jsx"></script>
+<script type="text/babel" src="DashboardGrid.jsx"></script>
+<script type="text/babel" src="DossierDetail.jsx"></script>
+<script type="text/babel" src="AddDocumentDrawer.jsx"></script>
+<script type="text/babel" src="AddIsoDrawer.jsx"></script>
+<script type="text/babel" src="StaffMachineProfile.jsx"></script>
+<script type="text/babel" src="CompanyProfile.jsx"></script>
+<script type="text/babel" src="KrijoDosjeNew.jsx"></script>
+<script type="text/babel" src="FirstLogin.jsx"></script>
+
+<script type="text/babel">
+
+const SCREENS = [
+{ id: 'login', label: 'Login' },
+{ id: 'forgot', label: 'Forgot password' },
+{ id: 'register', label: 'Register' },
+{ id: 'first', label: 'First login' },
+{ id: 'empty', label: 'Empty dashboard' },
+{ id: 'grid', label: 'Dossier grid' },
+{ id: 'detail', label: 'Dossier detail' },
+{ id: 'krijo', label: 'Krijo dosje' },
+{ id: 'profile', label: 'Company profile' }];
+
+
+function KitSwitcher({ screen, setScreen }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {if (ref.current && !ref.current.contains(e.target)) setOpen(false);};
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+  const current = SCREENS.find((s) => s.id === screen) || SCREENS[0];
+  return (
+    <div className="t-kit-switcher" ref={ref} style={{ padding: "40px 0px 64px 48px" }}>
+        {open &&
+      <div className="t-kit-switcher-menu" role="menu">
+            {SCREENS.map((s) =>
+        <button
+          key={s.id}
+          className={screen === s.id ? 'is-on' : ''}
+          onClick={() => {setScreen(s.id);setOpen(false);}}>
+                {s.label}
+              </button>
+        )}
+          </div>
+      }
+        <button className="t-kit-switcher-btn" onClick={() => setOpen((v) => !v)}>
+          <span className="t-kit-switcher-dot" />
+          <span>{current.label}</span>
+          <span className="material-icons t-kit-switcher-caret">
+            {open ? 'expand_more' : 'expand_less'}
+          </span>
+        </button>
+      </div>);
+
+}
+
+function App() {
+  // Persist the current screen so the user can refresh without losing their place.
+  const initial = (() => {
+    try {return localStorage.getItem('tenderat-kit-screen') || 'login';}
+    catch {return 'login';}
+  })();
+  const [screen, setScreenState] = React.useState(initial);
+  const [active, setActive] = React.useState(null);
+
+  const setScreen = (s) => {
+    setScreenState(s);
+    try {localStorage.setItem('tenderat-kit-screen', s);} catch {}
+  };
+
+  const onNav = (key) => {
+    if (key === 'dosjet') setScreen('grid');
+    if (key === 'profili') setScreen('profile');
+  };
+
+  let view;
+  switch (screen) {
+    case 'login':
+      view = <LoginScreen
+        onSignIn={() => setScreen('first')}
+        onForgot={() => setScreen('forgot')}
+        onRegister={() => setScreen('register')} />;
+
+      break;
+    case 'forgot':
+      view = <ForgotPassword onBackToLogin={() => setScreen('login')} />;
+      break;
+    case 'register':
+      view = <Register
+        onBackToLogin={() => setScreen('login')}
+        onRegistered={() => setScreen('first')} />;
+
+      break;
+    case 'first':
+      view = <FirstLogin onDone={() => setScreen('empty')} />;
+      break;
+    case 'empty':
+      view =
+      <div className="t-app">
+            <DashboardEmpty
+          onGoToProfile={() => setScreen('profile')}
+          onNav={onNav} />
+        
+          </div>;
+
+      break;
+    case 'grid':
+      view =
+      <div className="t-app">
+            <DashboardGrid
+          onOpen={(d) => {setActive(d);setScreen('detail');}}
+          onCreate={() => setScreen('krijo')}
+          onNav={onNav} />
+        
+          </div>;
+
+      break;
+    case 'detail':
+      view =
+      <div className="t-app">
+            <DossierDetail
+          dossier={active}
+          onBack={() => setScreen('grid')}
+          onNav={onNav} />
+        
+          </div>;
+
+      break;
+    case 'profile':
+      view =
+      <div className="t-app">
+            <CompanyProfile onNav={onNav} />
+          </div>;
+
+      break;
+    case 'krijo':
+      view =
+      <div className="t-app">
+            <KrijoDosjeNew
+          onBack={() => setScreen('grid')}
+          onCancel={() => setScreen('grid')}
+          onNext={() => alert('Hapi 2 — Dokumentacioni (ardhëja e ardhshme)')}
+          onNav={onNav} />
+        
+          </div>;
+
+      break;
+    default:
+      view = null;
+  }
+
+  return (
+    <>
+        <KitSwitcher screen={screen} setScreen={setScreen} />
+        {view}
+      </>);
+
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

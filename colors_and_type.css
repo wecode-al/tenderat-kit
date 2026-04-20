@@ -1,0 +1,254 @@
+/* =========================================================================
+   Tenderat Design System — Tokens
+   Source: TENDERAT.fig (app.tenderat.al)
+   Load order: this file first, then fonts.css, then your app styles.
+   ========================================================================= */
+
+/* ---------- Web fonts ---------- */
+/* Inter — UI + display */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+/* Roboto Medium — used only on MUI-styled filled buttons */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap");
+/* Material Icons — the product's iconography */
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+
+:root {
+  /* ============ COLORS — RAW ============ */
+
+  /* Brand — orange */
+  --t-orange-50:  #FFE5D8;  /* card border tint */
+  --t-orange-100: #FFD2A2;  /* dashed-border empty states */
+  --t-orange-500: #FF8400;  /* primary brand */
+  --t-orange-600: #DA7100;  /* hover / pressed */
+  --t-orange-700: #E27500;  /* orange text on light */
+
+  /* Neutral — warm paper surface */
+  --t-paper:      #F6F4F3;  /* app canvas / field fill */
+  --t-white:      #FFFFFF;
+  --t-off-white:  #FEFEFE;
+  --t-fog:        #FAFAFA;
+
+  /* Neutral — borders */
+  --t-border-100: #E7ECF3;  /* divider */
+  --t-border-200: #E2E8F0;  /* default */
+  --t-border-300: #D1D5DB;  /* input field */
+  --t-border-400: #D9D9D9;
+
+  /* Text — cool charcoal / slate */
+  --t-ink-900: #0D131C;     /* primary text, slightly warm near-black */
+  --t-ink-800: #111827;     /* strong text / dark hero panel */
+  --t-ink-700: #1F2937;     /* body alt */
+  --t-ink-500: #475569;     /* muted */
+  --t-ink-400: #64748B;     /* quieter muted */
+  --t-ink-300: #6B7280;     /* secondary text, placeholders */
+  --t-ink-200: #9CA3AF;
+
+  /* Semantic */
+  --t-red-500:  #EF4444;    /* notification dot */
+  --t-red-600:  #F44336;    /* destructive outline */
+  --t-red-700:  #C62828;    /* warning text (profile-missing nag) */
+  --t-blue-200: #93C5FD;    /* icon tint on dark hero */
+  --t-blue-50:  #DBEAFE;    /* paragraph on dark hero */
+
+  /* Overlays */
+  --t-overlay-glass-fill:   rgba(255,255,255,0.10);
+  --t-overlay-glass-border: rgba(255,255,255,0.20);
+  --t-overlay-hover:        rgba(0,0,0,0.04);
+  --t-overlay-press:        rgba(0,0,0,0.08);
+
+  /* ============ COLORS — SEMANTIC ============ */
+
+  --t-bg:               var(--t-paper);
+  --t-surface:          var(--t-white);
+  --t-surface-alt:      var(--t-paper);
+  --t-surface-dark:     var(--t-ink-800);
+  --t-field-fill:       var(--t-paper);
+
+  --t-fg-1:             var(--t-ink-900);
+  --t-fg-2:             var(--t-ink-300);
+  --t-fg-3:             var(--t-ink-400);
+  --t-fg-on-dark:       var(--t-white);
+  --t-fg-on-brand:      var(--t-white);
+
+  --t-brand:            var(--t-orange-500);
+  --t-brand-hover:      var(--t-orange-600);
+  --t-brand-text:       var(--t-orange-700);
+  --t-brand-tint:       var(--t-orange-50);
+  --t-brand-soft:       var(--t-orange-100);
+
+  --t-border:           var(--t-border-200);
+  --t-border-field:     var(--t-border-300);
+  --t-border-card:      var(--t-orange-50);
+  --t-border-divider:   var(--t-border-100);
+
+  --t-danger:           var(--t-red-600);
+  --t-danger-text:      var(--t-red-700);
+  --t-notification-dot: var(--t-red-500);
+
+  /* ============ TYPOGRAPHY — RAW ============ */
+
+  --t-font-ui:     "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --t-font-mui:    "Roboto", "Inter", sans-serif;    /* MUI-button leak */
+  --t-font-meta:   "Source Sans Pro", "Inter", sans-serif;
+  --t-font-icon:   "Material Icons";
+
+  --t-weight-regular:  400;
+  --t-weight-medium:   500;
+  --t-weight-semibold: 600;
+  --t-weight-bold:     700;
+
+  /* Scale — (font-size / line-height / tracking) */
+  --t-size-display:  40px;
+  --t-lh-display:    28px;
+  --t-tr-display:    -0.5px;
+
+  --t-size-h1:       36px;
+  --t-lh-h1:         40px;
+  --t-tr-h1:         -0.9px;
+
+  --t-size-h2:       30px;
+  --t-lh-h2:         36px;
+  --t-tr-h2:         -0.75px;
+
+  --t-size-h3:       26px;
+  --t-lh-h3:         24px;
+  --t-tr-h3:         0;
+
+  --t-size-h4:       20px;
+  --t-lh-h4:         28px;
+
+  --t-size-body-lg:  18px;
+  --t-lh-body-lg:    29px;
+
+  --t-size-body:     16px;
+  --t-lh-body:       24px;
+
+  --t-size-body-sm: 14px;
+  --t-lh-body-sm:   20px;
+
+  --t-size-caption: 12px;
+  --t-lh-caption:   16px;
+
+  --t-size-button:  14px;
+  --t-lh-button:    20px;
+  --t-tr-button:    0.46px; /* MUI-button tracking */
+
+  /* ============ SPACING ============ */
+  --t-space-0:  0;
+  --t-space-1:  4px;
+  --t-space-2:  8px;
+  --t-space-3:  12px;
+  --t-space-4:  16px;
+  --t-space-5:  20px;
+  --t-space-6:  24px;
+  --t-space-8:  32px;
+  --t-space-10: 40px;
+  --t-space-12: 48px;
+  --t-space-16: 64px;
+
+  /* ============ RADII ============ */
+  --t-radius-sm:   4px;    /* MUI filled button */
+  --t-radius-md:   6px;    /* input */
+  --t-radius-nav:  8px;    /* nav chip, icon tile, buttons */
+  --t-radius-lg:   12px;   /* card */
+  --t-radius-xl:   16px;   /* app shell */
+  --t-radius-pill: 9999px; /* avatar, bell, dot */
+
+  /* ============ SHADOWS ============ */
+  --t-shadow-none: none;
+
+  /* MUI elevation-1 — used on Roboto-labelled filled buttons */
+  --t-shadow-mui-1:
+    0px 3px 1px -2px rgba(0,0,0,0.20),
+    0px 2px 2px 0px rgba(0,0,0,0.14),
+    0px 1px 5px 0px rgba(0,0,0,0.12);
+
+  /* Notification-dot white ring */
+  --t-shadow-dot: 0px 2px 4px 0px var(--t-white);
+
+  /* ============ MOTION ============ */
+  --t-dur-1: 150ms;
+  --t-dur-2: 200ms;
+  --t-ease:  cubic-bezier(.4,0,.2,1);
+
+  /* ============ LAYOUT ============ */
+  --t-header-h:   73px;
+  --t-page-pad:   48px;
+  --t-page-max:   1440px;
+  --t-sidebar-w:  304px;
+}
+
+/* =========================================================================
+   Semantic role mappings for plain HTML tags
+   (optional — lean on these if you're NOT using utility classes)
+   ========================================================================= */
+
+html, body {
+  font-family: var(--t-font-ui);
+  font-size:   var(--t-size-body);
+  line-height: var(--t-lh-body);
+  color:       var(--t-fg-1);
+  background:  var(--t-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, .t-h1 {
+  font-family: var(--t-font-ui);
+  font-weight: var(--t-weight-bold);
+  font-size:   var(--t-size-h1);
+  line-height: var(--t-lh-h1);
+  letter-spacing: var(--t-tr-h1);
+  color: var(--t-fg-1);
+  margin: 0;
+}
+h2, .t-h2 {
+  font-weight: var(--t-weight-bold);
+  font-size:   var(--t-size-h2);
+  line-height: var(--t-lh-h2);
+  letter-spacing: var(--t-tr-h2);
+  color: var(--t-fg-1);
+  margin: 0;
+}
+h3, .t-h3 {
+  font-weight: var(--t-weight-bold);
+  font-size:   var(--t-size-h3);
+  line-height: var(--t-lh-h3);
+  color: var(--t-fg-1);
+  margin: 0;
+}
+h4, .t-h4 {
+  font-weight: var(--t-weight-semibold);
+  font-size:   var(--t-size-h4);
+  line-height: var(--t-lh-h4);
+  color: var(--t-fg-1);
+  margin: 0;
+}
+p, .t-body {
+  font-size: var(--t-size-body);
+  line-height: var(--t-lh-body);
+  color: var(--t-fg-1);
+}
+small, .t-caption {
+  font-size: var(--t-size-caption);
+  line-height: var(--t-lh-caption);
+  color: var(--t-fg-2);
+}
+.t-body-sm { font-size: var(--t-size-body-sm); line-height: var(--t-lh-body-sm); }
+.t-body-lg { font-size: var(--t-size-body-lg); line-height: var(--t-lh-body-lg); }
+
+/* Material Icons helper */
+.material-icons {
+  font-family: var(--t-font-icon);
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}

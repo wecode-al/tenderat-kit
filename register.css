@@ -1,0 +1,58 @@
+/* Register page — layered on top of login.css + forgot-password.css */
+
+.rg-pw { display: flex; flex-direction: column; gap: 8px; }
+
+.rg-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 12px/1 var(--t-font-ui);
+  color: var(--t-fg-2);
+}
+.rg-strength-bars {
+  display: inline-flex;
+  gap: 4px;
+  flex: 1;
+}
+.rg-strength-bars span {
+  flex: 1;
+  height: 4px;
+  border-radius: 3px;
+  background: #E2E8F0;
+  transition: background var(--t-dur-1) var(--t-ease);
+}
+.rg-strength.is-s1 .rg-strength-bars span.is-on { background: #EF4444; }
+.rg-strength.is-s2 .rg-strength-bars span.is-on { background: #F59E0B; }
+.rg-strength.is-s3 .rg-strength-bars span.is-on { background: #FACC15; }
+.rg-strength.is-s4 .rg-strength-bars span.is-on { background: #16A34A; }
+.rg-strength-label {
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+}
+
+.rg-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 12px/1.3 var(--t-font-ui);
+  color: var(--t-fg-2);
+  margin-top: -8px;
+}
+.rg-hint.is-err { color: #DC2626; }
+.rg-hint .material-icons { font-size: 16px; }
+
+.rg-agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font: 13px/1.5 var(--t-font-ui);
+  color: var(--t-fg-1);
+  cursor: pointer;
+}
+.rg-agree input[type="checkbox"] {
+  accent-color: var(--t-brand);
+  width: 18px; height: 18px;
+  margin-top: 2px;
+  flex: none;
+}
