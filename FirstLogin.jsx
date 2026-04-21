@@ -1,22 +1,11 @@
 // First Login — onboarding wizard shown after a user signs in for the first
-// time. Flow (per Figma /Page-1/First-Login, polished):
-//   0. Paketa               — pick a subscription plan
-//   1. Të dhënat e kompanisë — company info (identifikimi, aktiviteti, ortakët)
-//   2. Dëshmia e penalitetit — upload penalty-record file
-//   3. Sigurimet shoqërore   — upload social-insurance file + declaration
-//   4. Konfirmim             — "check your inbox" success
-//
-// Layout: 2-column wizard — a sticky left rail with the 5-step tracker and a
-// "what you've completed" summary, and a right content column. This replaces
-// the previous single-column layout so the user always sees where they are
-// and can jump backwards.
+// time. Email confirmation lives on the Register / Login screens, not here.
 
 const FL_STEPS = [
   { key: 'paketa',    label: 'Paketa',                icon: 'workspace_premium' },
   { key: 'kompania',  label: 'Të dhënat e kompanisë', icon: 'business' },
   { key: 'penalitet', label: 'Dëshmia e penalitetit', icon: 'gavel' },
   { key: 'sigurime',  label: 'Sigurimet shoqërore',   icon: 'verified_user' },
-  { key: 'konfirmim', label: 'Konfirmim',             icon: 'mark_email_read' },
 ];
 
 // ---------- Shared chrome ----------
@@ -52,8 +41,9 @@ function FLFooter() {
   );
 }
 
-// Left rail: step tracker + completed summary.
-function FLRail({ current, done, summary }) {
+// Left rail: step tracker + completed summary. Every step is clickable —
+// users can jump forward to any already-completed step or skip back.
+function FLRail({ current, done, summary, onJump }) {
   return (
     <aside className="fl-rail">
       <div className="fl-rail-top">
@@ -69,17 +59,23 @@ function FLRail({ current, done, summary }) {
           const state = done.has(i) ? 'done' : i === current ? 'active' : 'todo';
           return (
             <li key={s.key} className={'fl-rail-step fl-rail-' + state}>
-              <div className="fl-rail-node">
-                <span className="material-icons">
-                  {state === 'done' ? 'check' : s.icon}
-                </span>
-              </div>
-              <div className="fl-rail-text">
-                <div className="fl-rail-label">{s.label}</div>
-                {summary[i] && state !== 'active' && (
-                  <div className="fl-rail-hint">{summary[i]}</div>
-                )}
-              </div>
+              <button
+                type="button"
+                className="fl-rail-btn"
+                onClick={() => onJump && onJump(i)}
+                aria-current={state === 'active' ? 'step' : undefined}>
+                <div className="fl-rail-node">
+                  <span className="material-icons">
+                    {state === 'done' ? 'check' : s.icon}
+                  </span>
+                </div>
+                <div className="fl-rail-text">
+                  <div className="fl-rail-label">{s.label}</div>
+                  {summary[i] && state !== 'active' && (
+                    <div className="fl-rail-hint">{summary[i]}</div>
+                  )}
+                </div>
+              </button>
             </li>
           );
         })}
@@ -361,49 +357,6 @@ function FLUploadStep({
   );
 }
 
-// ---------- Step 4: Konfirmim ----------
-function FLKonfirmim({ email, onDone, onResend }) {
-  const [sent, setSent] = React.useState(false);
-  const resend = () => {
-    onResend && onResend();
-    setSent(true);
-    setTimeout(() => setSent(false), 4000);
-  };
-  return (
-    <div className="fl-step-body fl-step-body-done">
-      <div className="fl-done">
-        <div className="fl-done-mark">
-          <span className="material-icons">mark_email_read</span>
-        </div>
-        <h2>Pothuajse gati!</h2>
-        <p>
-          Të dhënat u ruajtën me sukses. Ju kemi dërguar një email konfirmimi
-          te <strong>{email || 'ju@kompania.al'}</strong>. Klikoni linkun për të
-          aktivizuar llogarinë dhe filluar me dosjen e parë.
-        </p>
-        <div className="fl-done-tips">
-          <div><span className="material-icons">schedule</span>Emaili mund të marrë disa minuta.</div>
-          <div><span className="material-icons">search</span>Kontrolloni edhe dosjen e Spam-it.</div>
-        </div>
-        <div className="fl-done-row">
-          {sent ? (
-            <span className="fl-done-sent">
-              <span className="material-icons">check_circle</span>
-              Emaili u ridërgua
-            </span>
-          ) : (
-            <>
-              <span>Nuk e gjeni emailin?</span>
-              <button type="button" className="t-link fl-linkbtn" onClick={resend}>Dërgoje sërish</button>
-            </>
-          )}
-        </div>
-        <PrimaryButton onClick={onDone}>Hyr në panel</PrimaryButton>
-      </div>
-    </div>
-  );
-}
-
 // ---------- Root ----------
 function FirstLogin({ onDone }) {
   const [step, setStep] = React.useState(() => {
@@ -438,8 +391,8 @@ function FirstLogin({ onDone }) {
     step > 1 && (company.emri || company.nipt) ? (company.emri || company.nipt) : (step > 1 ? 'Kompania — ruajtur' : null),
     step > 2 ? (penaltyFile ? penaltyFile.name : 'U anashkalua') : null,
     step > 3 ? (insuranceFile ? insuranceFile.name : 'U anashkalua') : null,
-    null,
   ];
+  const finish = () => { try { localStorage.removeItem('tenderat-first-step'); } catch {}; onDone && onDone(); };
   const done = new Set();
   for (let i = 0; i < step; i++) done.add(i);
 
@@ -491,13 +444,10 @@ function FirstLogin({ onDone }) {
           file={insuranceFile}
           setFile={setInsuranceFile}
           onBack={() => goto(2)}
-          onNext={() => goto(4)}
-          onSkip={() => goto(4)}
+          onNext={finish}
+          onSkip={finish}
         />
       );
-      break;
-    case 4:
-      view = <FLKonfirmim email="ju@kompania.al" onDone={() => { try { localStorage.removeItem('tenderat-first-step'); } catch {}; onDone && onDone(); }} />;
       break;
     default:
       view = null;
@@ -507,7 +457,7 @@ function FirstLogin({ onDone }) {
     <div className="fl-root">
       <AppHeader active={null} onNav={() => {}} />
       <div className="fl-wrap" style={{ padding: '20px 0px 80px' }}>
-        <FLRail current={step} done={done} summary={summary} />
+        <FLRail current={step} done={done} summary={summary} onJump={goto} />
         <main className="fl-main">
           {view}
         </main>

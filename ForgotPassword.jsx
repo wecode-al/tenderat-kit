@@ -33,19 +33,29 @@ function FPLangSwitch({ value, onChange }) {
 
 // ----- Step 1: Request the reset -----
 function FPRequest({ onSubmit, onBack }) {
-  const [id, setId] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const emailBad = email.length > 0 && !emailOk;
   return (
     <form
       className="lg-form"
-      onSubmit={(e) => { e.preventDefault(); if (id.trim()) onSubmit(id); }}>
+      onSubmit={(e) => { e.preventDefault(); if (emailOk) onSubmit(email); }}>
       <Field
-        label="NIPT ose email"
-        icon="badge"
-        placeholder="L01234567A ose emri@kompania.al"
-        value={id}
-        onChange={setId}
+        label="Email"
+        icon="alternate_email"
+        type="email"
+        placeholder="email@kompania.al"
+        value={email}
+        onChange={setEmail}
+        trailingIcon={emailOk ? 'check_circle' : (emailBad ? 'error' : undefined)}
       />
-      <PrimaryButton type="submit" disabled={!id.trim()}>
+      {emailBad && (
+        <div className="rg-hint is-err">
+          <span className="material-icons">error</span>
+          Ju lutem shkruani një email të vlefshëm.
+        </div>
+      )}
+      <PrimaryButton type="submit" disabled={!emailOk}>
         Dërgo linkun e rivendosjes
       </PrimaryButton>
       <button type="button" className="fp-back" onClick={onBack}>
@@ -64,14 +74,16 @@ function FPSent({ identifier, onResend, onBack }) {
     setResent(true);
     setTimeout(() => setResent(false), 4000);
   };
-  // If user typed an email, show the masked version; otherwise show a generic line.
-  const looksLikeEmail = /@/.test(identifier || '');
-  const masked = looksLikeEmail
+  const masked = identifier
     ? identifier.replace(/^(.)(.*)(.@)/, (_, a, b, c) => a + '•'.repeat(Math.max(1, b.length)) + c)
-    : null;
+    : '';
 
   return (
     <div className="fp-sent">
+      <div className="fp-sent-row">
+        <span className="material-icons">alternate_email</span>
+        Dërguar te <strong>{masked}</strong>
+      </div>
       <div className="fp-sent-row">
         <span className="material-icons">schedule</span>
         Emaili mund të marrë disa minuta.
@@ -80,12 +92,6 @@ function FPSent({ identifier, onResend, onBack }) {
         <span className="material-icons">search</span>
         Kontrolloni edhe dosjen e Spam-it.
       </div>
-      {looksLikeEmail && (
-        <div className="fp-sent-row">
-          <span className="material-icons">alternate_email</span>
-          Dërguar te <strong>{masked}</strong>
-        </div>
-      )}
 
       <div className="fp-resend">
         {resent ? (

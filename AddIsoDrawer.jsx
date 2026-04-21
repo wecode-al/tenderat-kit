@@ -140,13 +140,14 @@ function QualificationPicker({ value, onChange }) {
   );
 }
 
-function StaffForm({ onCancel, onChange }) {
-  const [name, setName] = React.useState('');
-  const [role, setRole] = React.useState('');
-  const [contractStart, setContractStart] = React.useState('');
-  const [contractEnd, setContractEnd] = React.useState('');
-  const [qualifs, setQualifs] = React.useState(new Set());
-  const [files, setFiles] = React.useState({});
+function StaffForm({ onCancel, onChange, initial }) {
+  const init = initial || {};
+  const [name, setName] = React.useState(init.name || '');
+  const [role, setRole] = React.useState(init.role || '');
+  const [contractStart, setContractStart] = React.useState(init.contractStart || '');
+  const [contractEnd, setContractEnd] = React.useState(init.contractEnd || '');
+  const [qualifs, setQualifs] = React.useState(new Set(Array.isArray(init.qualifications) ? init.qualifications : []));
+  const [files, setFiles] = React.useState(init.docs || {});
 
   React.useEffect(() => {
     if (!onChange) return;
@@ -348,13 +349,14 @@ function TypeCombo({ options, value, onChange, placeholder = 'Zgjidh llojin...' 
   );
 }
 
-function MachineForm({ onChange }) {
-  const [name, setName] = React.useState('');
-  const [plate, setPlate] = React.useState('');
-  const [vin, setVin] = React.useState('');
-  const [status, setStatus] = React.useState('owned'); // 'owned' | 'rent'
-  const [files, setFiles] = React.useState({});
-  const [machineType, setMachineType] = React.useState('');
+function MachineForm({ onChange, initial }) {
+  const init = initial || {};
+  const [name, setName] = React.useState(init.name || '');
+  const [plate, setPlate] = React.useState(init.plate || '');
+  const [vin, setVin] = React.useState(init.vin || '');
+  const [status, setStatus] = React.useState(init.status || 'owned'); // 'owned' | 'rent'
+  const [files, setFiles] = React.useState(init.docs || {});
+  const [machineType, setMachineType] = React.useState(init.type || '');
   const docs = status === 'rent' ? [...MACHINE_DOCS, MACHINE_RENT_DOC] : MACHINE_DOCS;
 
   React.useEffect(() => {
@@ -469,17 +471,18 @@ function MachineForm({ onChange }) {
   );
 }
 
-function SimpleForm({ nameLabel, namePh, kind, onChange }) {
+function SimpleForm({ nameLabel, namePh, kind, onChange, initial }) {
   const isCatalog = kind === 'catalog';
   const isLicense = kind === 'license';
-  const [name, setName] = React.useState('');
-  const [issuer, setIssuer] = React.useState('');
-  const [issued, setIssued] = React.useState('');
-  const [expires, setExpires] = React.useState('');
-  const [file, setFile] = React.useState(null);
+  const init = initial || {};
+  const [name, setName] = React.useState(init.name || '');
+  const [issuer, setIssuer] = React.useState(init.issuer || '');
+  const [issued, setIssued] = React.useState(init.issued || '');
+  const [expires, setExpires] = React.useState(init.expires || '');
+  const [file, setFile] = React.useState(init.file || null);
   // Source language of the uploaded catalog. If 'sq', no translation needed;
   // otherwise AI translates the file into Albanian.
-  const [srcLang, setSrcLang] = React.useState('sq');
+  const [srcLang, setSrcLang] = React.useState(init.srcLang || 'sq');
   // "Popular" languages shown at the top of the dropdown, then the rest
   // sorted alphabetically. Users can search by name or native name.
   const LANGS = [
@@ -699,15 +702,20 @@ function LangOpt({ l, active, onPick }) {
   );
 }
 
-function AddIsoDrawer({ open, onClose, onSave, kind = 'iso', saveToProfileToggle }) {
+function AddIsoDrawer({ open, onClose, onSave, kind = 'iso', saveToProfileToggle, initial }) {
+  const isEdit = !!initial;
+  const baseConfig = {
+    iso:     { title: 'certifikim ISO',    subtitle: 'Emri i certifikimit dhe datat e vlefshmërisë.',            nameLabel: 'Emri i ISO',          namePh: 'p.sh. ISO 14001' },
+    staff:   { title: 'staf',               subtitle: 'Të dhënat, kualifikimet dhe dokumentet e punonjësit.',    nameLabel: 'Emri dhe mbiemri',    namePh: 'p.sh. Meti Musaj' },
+    machine: { title: 'makinerie',          subtitle: 'Të dhënat e makinerisë/mjetit dhe datat përkatëse.',      nameLabel: 'Emri / targa',        namePh: 'p.sh. Fugon FR-4521' },
+    work:    { title: 'punë të ngjashme',   subtitle: 'Të dhënat e kontratës së ngjashme të realizuar.',         nameLabel: 'Emri i kontratës',    namePh: 'p.sh. Rikonstruksion rruga Elbasan' },
+    catalog: { title: 'katalog / autorizim', subtitle: 'Ngarko PDF-in. Përkthimet në gjuhë të tjera gjenerohen me AI.', nameLabel: 'Emri i dokumentit', namePh: 'p.sh. Katalog teknik — Pompa uji' },
+    license: { title: 'licencë',             subtitle: 'Licenca profesionale dhe data e vlefshmërisë.',          nameLabel: 'Emri i licencës',     namePh: 'p.sh. Licencë ndërtimi — NP-4A' },
+  }[kind] || { title: '', subtitle: '', nameLabel: 'Emri', namePh: '' };
   const config = {
-    iso:     { title: 'Shto certifikim ISO',    subtitle: 'Emri i certifikimit dhe datat e vlefshmërisë.',            nameLabel: 'Emri i ISO',          namePh: 'p.sh. ISO 14001' },
-    staff:   { title: 'Shto staf',               subtitle: 'Të dhënat, kualifikimet dhe dokumentet e punonjësit.',    nameLabel: 'Emri dhe mbiemri',    namePh: 'p.sh. Meti Musaj' },
-    machine: { title: 'Shto makinerie',          subtitle: 'Të dhënat e makinerisë/mjetit dhe datat përkatëse.',      nameLabel: 'Emri / targa',        namePh: 'p.sh. Fugon FR-4521' },
-    work:    { title: 'Shto punë të ngjashme',   subtitle: 'Të dhënat e kontratës së ngjashme të realizuar.',         nameLabel: 'Emri i kontratës',    namePh: 'p.sh. Rikonstruksion rruga Elbasan' },
-    catalog: { title: 'Shto katalog / autorizim', subtitle: 'Ngarko PDF-in. Përkthimet në gjuhë të tjera gjenerohen me AI.', nameLabel: 'Emri i dokumentit', namePh: 'p.sh. Katalog teknik — Pompa uji' },
-    license: { title: 'Shto licencë',             subtitle: 'Licenca profesionale dhe data e vlefshmërisë.',          nameLabel: 'Emri i licencës',     namePh: 'p.sh. Licencë ndërtimi — NP-4A' },
-  }[kind] || { title: 'Shto', subtitle: '', nameLabel: 'Emri', namePh: '' };
+    ...baseConfig,
+    title: (isEdit ? 'Ndrysho ' : 'Shto ') + baseConfig.title,
+  };
 
   // Hold the in-progress form data so Ruaj can emit it.
   const dataRef = React.useRef(null);
@@ -753,10 +761,10 @@ function AddIsoDrawer({ open, onClose, onSave, kind = 'iso', saveToProfileToggle
 
         <div className="add-doc-body" key={`${kind}-${openSession}`}>
           {kind === 'staff'
-            ? <StaffForm onCancel={onClose} onChange={receive} />
+            ? <StaffForm onCancel={onClose} onChange={receive} initial={initial} />
             : kind === 'machine'
-              ? <MachineForm onChange={receive} />
-              : <SimpleForm kind={kind} nameLabel={config.nameLabel} namePh={config.namePh} onChange={receive} />}
+              ? <MachineForm onChange={receive} initial={initial} />
+              : <SimpleForm kind={kind} nameLabel={config.nameLabel} namePh={config.namePh} onChange={receive} initial={initial} />}
         </div>
 
         <footer className="add-doc-foot">

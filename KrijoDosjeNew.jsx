@@ -94,13 +94,14 @@ function MoneyInput({ label, placeholder, value, onChange, required, currency = 
 
 // ---------- Stepper ----------
 const K_STEPS = [
-  { key: 'data',        label: 'Të dhënat e dosjes', icon: 'edit_note' },
-  { key: 'ligjor',      label: 'Dok. Ligjor',        icon: 'gavel' },
-  { key: 'financiar',   label: 'Dok. Financiar',     icon: 'account_balance' },
-  { key: 'teknik',      label: 'Dok. Teknik',        icon: 'engineering' },
-  { key: 'preventivi',  label: 'Preventivi',         icon: 'calculate' },
-  { key: 'metodologjia',label: 'Metodologjia',       icon: 'menu_book' },
-  { key: 'review',      label: 'Rishiko & Krijo',    icon: 'check_circle' },
+  { key: 'data',         label: 'Të dhënat e dosjes', icon: 'edit_note' },
+  { key: 'ligjor',       label: 'Dok. Ligjor',        icon: 'gavel' },
+  { key: 'financiar',    label: 'Dok. Financiar',     icon: 'account_balance' },
+  { key: 'teknik',       label: 'Dok. Teknik',        icon: 'engineering' },
+  { key: 'preventivi',   label: 'Preventivi',         icon: 'calculate' },
+  { key: 'deklarimet',   label: 'Deklarimet',         icon: 'fact_check' },
+  { key: 'metodologjia', label: 'Metodologjia',       icon: 'menu_book' },
+  { key: 'review',       label: 'Rishiko & Krijo',    icon: 'check_circle' },
 ];
 
 function KrijoStepper({ step = 0, onJump }) {
@@ -166,7 +167,7 @@ function formatDate(iso) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-function MiniList({ title, icon, hint, items, onOpen, onRemove, renderItem, addLabel = 'Shto' }) {
+function MiniList({ title, icon, hint, items, onOpen, onRemove, onEdit, renderItem, addLabel = 'Shto' }) {
   return (
     <div className="k-sup-list">
       <div className="k-sup-list-head">
@@ -184,9 +185,24 @@ function MiniList({ title, icon, hint, items, onOpen, onRemove, renderItem, addL
               <span className="k-sup-item-main">
                 {renderItem(it)}
               </span>
-              <button className="k-sup-item-x" onClick={() => onRemove(i)} aria-label="Hiq">
-                <span className="material-icons">close</span>
-              </button>
+              <div className="k-sup-item-actions">
+                {onEdit && (
+                  <button
+                    type="button"
+                    className="k-sup-item-edit"
+                    onClick={() => onEdit(i)}
+                    aria-label="Ndrysho">
+                    <span className="material-icons">edit</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="k-sup-item-x"
+                  onClick={() => onRemove(i)}
+                  aria-label="Hiq">
+                  <span className="material-icons">close</span>
+                </button>
+              </div>
             </li>
           ))}
         </ul>
@@ -205,7 +221,40 @@ function MiniList({ title, icon, hint, items, onOpen, onRemove, renderItem, addL
 // Flat 4-up grid of the four capacity mini-lists (Staf / Makineri /
 // Certifikime / Licenca). Reused between DeklaroMbeshtetjen (support mode)
 // and Bashkimi (consortium mode).
-function CapacityLists({ data, onOpen, onRemove, staffHint, machineryHint }) {
+// Small single-doc card used inside the extended CapacityLists extras (Listëpagesa / Xhiro vjetore)
+// and on PartnerFillScreen. Mock upload only — sets a filename.
+function CapSingleDoc({ title, hint, icon, file, onPick, onClear }) {
+  return (
+    <div className={'k-sup-single' + (file ? ' has-file' : '')}>
+      <div className="k-sup-single-icon">
+        <span className="material-icons">{icon}</span>
+      </div>
+      <div className="k-sup-single-body">
+        <div className="k-sup-single-title">{title}</div>
+        <div className="k-sup-single-hint">{hint}</div>
+        {file ? (
+          <div className="k-sup-single-file">
+            <span className="material-icons">insert_drive_file</span>
+            <div className="k-sup-single-file-meta">
+              <strong>{file.name}</strong>
+              {file.size && <span>{file.size}</span>}
+            </div>
+            <button type="button" className="k-sup-single-file-x" onClick={onClear} aria-label="Hiq">
+              <span className="material-icons">close</span>
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="k-sup-single-pick" onClick={onPick}>
+            <span className="material-icons">upload_file</span>
+            Ngarko dokumentin
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CapacityLists({ data, onOpen, onRemove, onEdit, staffHint, machineryHint, extras }) {
   return (
     <div className="k-sup-lists">
       <MiniList
@@ -215,6 +264,7 @@ function CapacityLists({ data, onOpen, onRemove, staffHint, machineryHint }) {
         items={data.staff}
         onOpen={() => onOpen('staff')}
         onRemove={onRemove('staff')}
+        onEdit={onEdit && ((i) => onEdit('staff', i))}
         addLabel="Shto staf"
         renderItem={(it) => (
           <>
@@ -239,6 +289,7 @@ function CapacityLists({ data, onOpen, onRemove, staffHint, machineryHint }) {
         items={data.machinery}
         onOpen={() => onOpen('machine')}
         onRemove={onRemove('machinery')}
+        onEdit={onEdit && ((i) => onEdit('machinery', i))}
         addLabel="Shto makinerie"
         renderItem={(it) => (
           <>
@@ -260,6 +311,7 @@ function CapacityLists({ data, onOpen, onRemove, staffHint, machineryHint }) {
         items={data.certificates}
         onOpen={() => onOpen('iso')}
         onRemove={onRemove('certificates')}
+        onEdit={onEdit && ((i) => onEdit('certificates', i))}
         addLabel="Shto certifikim"
         renderItem={(it) => (
           <>
@@ -281,6 +333,7 @@ function CapacityLists({ data, onOpen, onRemove, staffHint, machineryHint }) {
         items={data.licenses}
         onOpen={() => onOpen('license')}
         onRemove={onRemove('licenses')}
+        onEdit={onEdit && ((i) => onEdit('licenses', i))}
         addLabel="Shto licencë"
         renderItem={(it) => (
           <>
@@ -296,44 +349,156 @@ function CapacityLists({ data, onOpen, onRemove, staffHint, machineryHint }) {
           </>
         )}
       />
+
+      {extras && (
+        <>
+          <div className="k-sup-full">
+            <MiniList
+              title="Punë të ngjashme"
+              icon="engineering"
+              hint="Kontratat e ngjashme të realizuara."
+              items={data.similarWorks || []}
+              onOpen={() => onOpen('work')}
+              onRemove={onRemove('similarWorks')}
+              onEdit={onEdit && ((i) => onEdit('similarWorks', i))}
+              addLabel="Shto punë të ngjashme"
+              renderItem={(it) => (
+                <>
+                  <span className="k-sup-item-name">{it.name}</span>
+                  {it.issuer && <span className="k-sup-item-meta">{it.issuer}</span>}
+                  {it.expires && <span className="k-sup-item-meta">Skadon {formatDate(it.expires)}</span>}
+                  {it.file && (
+                    <span className="k-sup-item-tag is-doc">
+                      <span className="material-icons">description</span>
+                      {it.file.name}
+                    </span>
+                  )}
+                </>
+              )}
+            />
+          </div>
+          <CapSingleDoc
+            title="Listëpagesa"
+            hint="Listëpagesa më e fundit e stafit."
+            icon="receipt_long"
+            file={data.listpagesa || null}
+            onPick={() => extras.onPickDoc && extras.onPickDoc('listpagesa', 'Listepagesa')}
+            onClear={() => extras.onClearDoc && extras.onClearDoc('listpagesa')}
+          />
+          <CapSingleDoc
+            title="Xhiro vjetore"
+            hint="Vërtetim i xhiros vjetore nga bilanci."
+            icon="trending_up"
+            file={data.xhiro || null}
+            onPick={() => extras.onPickDoc && extras.onPickDoc('xhiro', 'Xhiro_vjetore')}
+            onClear={() => extras.onClearDoc && extras.onClearDoc('xhiro')}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+// Small 6-digit code input — mirrors the Login/Register CodeInput but scoped to
+// this component so the Krijo flow doesn't depend on login/register JS having
+// loaded first.
+function KSupCodeInput({ value, onChange, length = 6 }) {
+  const refs = React.useRef([]);
+  const digits = value.padEnd(length, ' ').slice(0, length).split('');
+  const set = (i, ch) => {
+    const clean = ch.replace(/\D/g, '').slice(0, 1);
+    const next = (value + '').padEnd(length, ' ').split('');
+    next[i] = clean || ' ';
+    onChange(next.join('').replace(/\s+$/, '').replace(/\s/g, ''));
+    if (clean && i < length - 1) refs.current[i + 1] && refs.current[i + 1].focus();
+  };
+  const onKey = (i, e) => {
+    if (e.key === 'Backspace' && !digits[i].trim() && i > 0) refs.current[i - 1] && refs.current[i - 1].focus();
+  };
+  const onPaste = (e) => {
+    const text = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, length);
+    if (!text) return;
+    e.preventDefault();
+    onChange(text);
+    const idx = Math.min(text.length, length - 1);
+    refs.current[idx] && refs.current[idx].focus();
+  };
+  return (
+    <div className="k-sup-code">
+      {Array.from({ length }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => (refs.current[i] = el)}
+          className={'k-sup-code-cell' + (digits[i].trim() ? ' is-filled' : '')}
+          inputMode="numeric"
+          maxLength={1}
+          value={digits[i].trim()}
+          onChange={(e) => set(i, e.target.value)}
+          onKeyDown={(e) => onKey(i, e)}
+          onPaste={onPaste}
+          aria-label={'Shifra ' + (i + 1)}
+        />
+      ))}
     </div>
   );
 }
 
 function DeklaroMbeshtetjen({ form, setSupport }) {
   const s = form.support;
-  const [emailOpen, setEmailOpen] = React.useState(false);
   const [drawerKind, setDrawerKind] = React.useState(null);
+  const [editIndex, setEditIndex] = React.useState(-1);
   const myCompany = 'Albkons SH.P.K.'; // placeholder — logged-in company name
 
   const push = (k) => (item) => setSupport(k)([...(s[k] || []), item]);
   const removeAt = (k) => (i) => setSupport(k)(s[k].filter((_, idx) => idx !== i));
+  const replaceAt = (k) => (i, item) => setSupport(k)(s[k].map((it, idx) => (idx === i ? item : it)));
 
-  // Map drawer kind → store key so the same drawer populates different lists.
   const KIND_TO_STORE = {
     staff: 'staff',
     machine: 'machinery',
     iso: 'certificates',
     license: 'licenses',
+    work: 'similarWorks',
+  };
+  const STORE_TO_KIND = {
+    staff: 'staff',
+    machinery: 'machine',
+    certificates: 'iso',
+    licenses: 'license',
+    similarWorks: 'work',
   };
 
   function handleDrawerSave(data) {
     const storeKey = KIND_TO_STORE[drawerKind];
     if (!storeKey || !data) return;
-    // Require at least a name — empty entries are discarded silently.
     if (!data.name) return;
-    push(storeKey)(data);
+    if (editIndex >= 0) {
+      replaceAt(storeKey)(editIndex, data);
+    } else {
+      push(storeKey)(data);
+    }
+    setEditIndex(-1);
   }
 
-  const emailBody = `Të nderuar ${s.emri || '[emri i kompanisë]'},\n\n`
-    + `Në kuadër të procedurës së prokurimit "${form.objekti || '[objekti]'}" (referenca ${form.referenca || '[referenca]'}),\n`
-    + `shoqëria jonë ${myCompany} po përgatit dosjen e pjesëmarrjes duke u mbështetur në kapacitetet tuaja.\n\n`
-    + `Ju lutem të na dërgoni të dhënat e mëposhtme:\n`
-    + `• Stafi që do marrë pjesë (emër, pozicion, kualifikime)\n`
-    + `• Makineritë që do përdoren (emër, targa, nr. shasie)\n`
-    + `• Certifikimet e vlefshme (ISO 9001 / 14001 / 45001, etj.)\n`
-    + `• Licencat profesionale\n\n`
-    + `Faleminderit,\n${myCompany}`;
+  const handleEdit = (storeKey, i) => {
+    const kind = STORE_TO_KIND[storeKey];
+    if (!kind) return;
+    setEditIndex(i);
+    setDrawerKind(kind);
+  };
+
+  const editInitial = (editIndex >= 0 && drawerKind)
+    ? (s[KIND_TO_STORE[drawerKind]] || [])[editIndex]
+    : null;
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email || '');
+
+  const genLink = () => {
+    const token = Math.random().toString(36).slice(2, 10);
+    const url = `https://tenderat.al/partner/${token}`;
+    setSupport('shareLink')(url);
+    setSupport('linkSent')(true);
+  };
 
   return (
     <Section
@@ -350,82 +515,132 @@ function DeklaroMbeshtetjen({ form, setSupport }) {
         <TextInput label="Emri i shoqërisë mbështetëse" placeholder="P.sh. Konstruksion Plus SH.P.K." required value={s.emri} onChange={setSupport('emri')} />
         <TextInput label="NIPT" placeholder="K12345678L" required value={s.nipt} onChange={setSupport('nipt')} />
         <TextInput label="Adresa" placeholder="Rr. e Durrësit 45, Tiranë" value={s.adresa} onChange={setSupport('adresa')} />
-        <TextInput label="Email kontakti" placeholder="info@kompania.al" value={s.email} onChange={setSupport('email')} trailing="mail" />
+        <TextInput
+          label="Email kontakti"
+          placeholder="info@kompania.al"
+          value={s.email}
+          onChange={setSupport('email')}
+          trailing="mail"
+          required
+          helper="Linku i ftesës do t'i dërgohet këtij email-i dhe vetëm ai që e merr do të ketë kodin për ta hapur."
+        />
       </div>
 
-      <div className="k-sup-email-row">
-        <div>
-          <h5>Kërko të dhëna nga shoqëria mbështetëse</h5>
-          <p>Gjenero një email paraprak për stafin, makineritë, certifikimet dhe licencat që do përdoren.</p>
+      {/* Two-option picker: either the user fills the partner's data directly,
+          or the partner fills it themselves via a generated link. */}
+      <div className="k-sup-mode">
+        <h5>Si do t'i plotësoni kapacitetet e kompanisë mbështetëse?</h5>
+        <div className="k-sup-mode-opts">
+          <button
+            type="button"
+            className={'k-sup-mode-opt' + (s.mode === 'direct' ? ' is-on' : '')}
+            onClick={() => setSupport('mode')('direct')}>
+            <span className="k-sup-mode-icon">
+              <span className="material-icons">edit_note</span>
+            </span>
+            <span className="k-sup-mode-body">
+              <strong>Plotësoj vetë të dhënat</strong>
+              <span>Unë shkruaj stafin, makineritë dhe dokumentet e kompanisë mbështetëse.</span>
+            </span>
+            <span className="k-sup-mode-radio" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={'k-sup-mode-opt' + (s.mode === 'link' ? ' is-on' : '')}
+            onClick={() => setSupport('mode')('link')}>
+            <span className="k-sup-mode-icon">
+              <span className="material-icons">link</span>
+            </span>
+            <span className="k-sup-mode-body">
+              <strong>Gjenero link për kompaninë</strong>
+              <span>Kompania mbështetëse i fut vetë të dhënat nëpërmjet një linku të sigurt.</span>
+            </span>
+            <span className="k-sup-mode-radio" aria-hidden />
+          </button>
         </div>
-        <button type="button" className="k-sup-email-btn" onClick={() => setEmailOpen(true)}>
-          <span className="material-icons">send</span>
-          Gjenero email kërkese
-        </button>
       </div>
 
-      <CapacityLists
-        data={s}
-        onOpen={(kind) => setDrawerKind(kind)}
-        onRemove={(storeKey) => removeAt(storeKey)}
-        staffHint="Personat e kompanisë mbështetëse që do marrin pjesë."
-        machineryHint="Mjetet e kompanisë mbështetëse."
-      />
+      {s.mode === 'direct' ? (
+        <>
+          <CapacityLists
+            data={s}
+            onOpen={(kind) => { setEditIndex(-1); setDrawerKind(kind); }}
+            onRemove={(storeKey) => removeAt(storeKey)}
+            onEdit={handleEdit}
+            staffHint="Personat e kompanisë mbështetëse që do marrin pjesë."
+            machineryHint="Mjetet e kompanisë mbështetëse."
+            extras={{
+              onPickDoc: (key, label) => setSupport(key)({ name: label + '.pdf', size: '240 KB' }),
+              onClearDoc: (key) => setSupport(key)(null),
+            }}
+          />
+        </>
+      ) : (
+        <div className="k-sup-link-panel">
+          <div className="k-sup-link-copy">
+            <h5>Linku për kompaninë mbështetëse</h5>
+            <p>
+              Linku i sigurt do t'i dërgohet në email-in <strong>{s.email || '—'}</strong>.
+              Kur kompania <em>{s.emri || 'mbështetëse'}</em> ta hapë, duhet të vendosë
+              një kod 6-shifror që i dërgohet po te ky email — kështu vetëm personi që ka
+              akses te ky email mund të plotësojë të dhënat.
+            </p>
+          </div>
+
+          {s.linkSent && s.shareLink ? (
+            <div className="k-sup-link-card">
+              <div className="k-sup-link-head">
+                <span className="material-icons">mark_email_read</span>
+                <div>
+                  <strong>Linku u dërgua te {s.email}</strong>
+                  <span>Pret të plotësohet nga kompania mbështetëse.</span>
+                </div>
+                <span className="k-sup-link-pill">Në pritje</span>
+              </div>
+              <div className="k-sup-link-url">
+                <span className="material-icons">link</span>
+                <input readOnly value={s.shareLink} />
+                <button
+                  type="button"
+                  className="k-sup-link-copybtn"
+                  onClick={() => { try { navigator.clipboard.writeText(s.shareLink); } catch {} }}>
+                  <span className="material-icons">content_copy</span>
+                  Kopjo
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {!emailOk && (
+                <div className="k-sup-verify-err">
+                  <span className="material-icons">error</span>
+                  Plotësoni email-in për 1 partner para se të dërgoni linkun.
+                </div>
+              )}
+              <button
+                type="button"
+                className="k-sup-email-btn"
+                disabled={!emailOk || !s.emri || !s.nipt}
+                title={!emailOk ? 'Shkruani një email të vlefshëm' : (!s.emri || !s.nipt ? 'Plotësoni emrin dhe NIPT-in e kompanisë' : undefined)}
+                onClick={genLink}>
+                <span className="material-icons">send</span>
+                Gjenero dhe dërgo linkun
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {window.AddIsoDrawer && (
         <window.AddIsoDrawer
           open={!!drawerKind}
           kind={drawerKind || 'staff'}
-          onClose={() => setDrawerKind(null)}
+          initial={editInitial}
+          onClose={() => { setDrawerKind(null); setEditIndex(-1); }}
           onSave={handleDrawerSave}
         />
       )}
 
-      {emailOpen && (
-        <div className="k-sup-email-modal" role="dialog" aria-modal="true">
-          <div className="k-sup-email-scrim" onClick={() => setEmailOpen(false)} />
-          <div className="k-sup-email-card">
-            <header>
-              <h3>Email kërkese për të dhëna</h3>
-              <button className="k-sup-email-close" onClick={() => setEmailOpen(false)} aria-label="Mbyll">
-                <span className="material-icons">close</span>
-              </button>
-            </header>
-            <div className="k-sup-email-body">
-              <label className="k-field">
-                <span className="k-field-label">Për</span>
-                <div className="k-field-input"><input type="text" readOnly value={s.email || '(email i pa-plotësuar)'} /></div>
-              </label>
-              <label className="k-field">
-                <span className="k-field-label">Subjekti</span>
-                <div className="k-field-input"><input type="text" defaultValue={`Kërkesë për të dhëna — ${form.referenca || 'dosje e re'}`} /></div>
-              </label>
-              <label className="k-field">
-                <span className="k-field-label">Mesazhi</span>
-                <div className="k-field-input k-field-textarea">
-                  <textarea rows={10} defaultValue={emailBody} />
-                </div>
-              </label>
-            </div>
-            <footer>
-              <button className="k-link" onClick={() => setEmailOpen(false)}>Anulo</button>
-              <button
-                className="k-sup-email-send"
-                onClick={() => { setSupport('emailStatus')('sent'); setEmailOpen(false); }}>
-                <span className="material-icons">send</span>
-                Dërgo email
-              </button>
-            </footer>
-          </div>
-        </div>
-      )}
-
-      {s.emailStatus === 'sent' && (
-        <div className="k-sup-email-sent">
-          <span className="material-icons">mark_email_read</span>
-          Email-i i kërkesës u dërgua te <strong>{s.email}</strong>.
-        </div>
-      )}
     </Section>
   );
 }
@@ -434,6 +649,24 @@ function DeklaroMbeshtetjen({ form, setSupport }) {
 function Bashkimi({ form, setConsortium }) {
   const c = form.consortium;
   const [drawerKind, setDrawerKind] = React.useState(null);
+  const [drawerPartnerId, setDrawerPartnerId] = React.useState(null);
+  const [editIndex, setEditIndex] = React.useState(-1);
+  const [openPartnerId, setOpenPartnerId] = React.useState(
+    (c.partners.find((p) => !p.isSelf) || {}).id || null
+  );
+
+  // Keep the accordion aligned with the non-self partner list: default to the
+  // first one when it's empty or points at a removed partner.
+  React.useEffect(() => {
+    const nonSelf = c.partners.filter((p) => !p.isSelf);
+    if (nonSelf.length === 0) {
+      if (openPartnerId !== null) setOpenPartnerId(null);
+      return;
+    }
+    if (!openPartnerId || !nonSelf.some((p) => p.id === openPartnerId)) {
+      setOpenPartnerId(nonSelf[0].id);
+    }
+  }, [c.partners, openPartnerId]);
 
   const setPartners = (next) => setConsortium('partners')(next);
   const updatePartner = (id, patch) =>
@@ -443,8 +676,23 @@ function Bashkimi({ form, setConsortium }) {
   const addPartner = () =>
     setPartners([
       ...c.partners,
-      { id: 'p' + Date.now() + Math.random().toString(36).slice(2, 6), name: '', nipt: '', percent: '' },
+      {
+        id: 'p' + Date.now() + Math.random().toString(36).slice(2, 6),
+        name: '', nipt: '', percent: '', email: '',
+        linkSent: false, shareLink: '',
+        capacities: {
+          staff: [], machinery: [], certificates: [], licenses: [],
+          similarWorks: [], listpagesa: null, xhiro: null,
+        },
+      },
     ]);
+
+  const setPartnerCapacity = (id, kind, next) =>
+    setPartners(c.partners.map((p) => (p.id === id
+      ? { ...p, capacities: { ...(p.capacities || {}), [kind]: next } }
+      : p)));
+
+  const emailValid = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
 
   // Running total — empty fields count as 0 so the user sees progress as they type.
   const total = c.partners.reduce((sum, p) => {
@@ -455,20 +703,52 @@ function Bashkimi({ form, setConsortium }) {
   const allPartnersNamed = c.partners.every((p) => p.name.trim().length > 0);
   const partnersReady = totalRounded === 100 && allPartnersNamed && c.partners.length >= 2;
 
-  const push = (k) => (item) => setConsortium(k)([...(c[k] || []), item]);
-  const removeAt = (k) => (i) => setConsortium(k)(c[k].filter((_, idx) => idx !== i));
-
   const KIND_TO_STORE = {
     staff: 'staff',
     machine: 'machinery',
     iso: 'certificates',
     license: 'licenses',
+    work: 'similarWorks',
+  };
+  const STORE_TO_KIND = {
+    staff: 'staff',
+    machinery: 'machine',
+    certificates: 'iso',
+    licenses: 'license',
+    similarWorks: 'work',
   };
   function handleDrawerSave(data) {
     const storeKey = KIND_TO_STORE[drawerKind];
-    if (!storeKey || !data || !data.name) return;
-    push(storeKey)(data);
+    if (!storeKey || !data || !data.name || !drawerPartnerId) return;
+    const partner = c.partners.find((p) => p.id === drawerPartnerId);
+    if (!partner) return;
+    const list = (partner.capacities && partner.capacities[storeKey]) || [];
+    if (editIndex >= 0) {
+      setPartnerCapacity(drawerPartnerId, storeKey, list.map((it, idx) => (idx === editIndex ? data : it)));
+    } else {
+      setPartnerCapacity(drawerPartnerId, storeKey, [...list, data]);
+    }
+    setEditIndex(-1);
   }
+
+  const activePartner = drawerPartnerId ? c.partners.find((p) => p.id === drawerPartnerId) : null;
+  const editInitial = (editIndex >= 0 && drawerKind && activePartner)
+    ? ((activePartner.capacities || {})[KIND_TO_STORE[drawerKind]] || [])[editIndex]
+    : null;
+
+  // Link mode — bulk send
+  const nonSelfPartners = c.partners.filter((p) => !p.isSelf);
+  const missingEmails = nonSelfPartners.filter((p) => !emailValid(p.email));
+
+  const sendAllLinks = () => {
+    const next = c.partners.map((p) => {
+      if (p.isSelf) return p;
+      const token = Math.random().toString(36).slice(2, 10);
+      return { ...p, linkSent: true, shareLink: `https://tenderat.al/partner/${token}` };
+    });
+    setPartners(next);
+    setConsortium('linkSentAll')(true);
+  };
 
   return (
     <Section
@@ -486,60 +766,80 @@ function Bashkimi({ form, setConsortium }) {
         <div className="k-cons-head">
           <div>Shoqëria</div>
           <div>NIPT</div>
+          <div>Email</div>
           <div className="k-cons-col-pct">Përqindja</div>
           <div aria-hidden />
         </div>
-        {c.partners.map((p, i) => (
+        {c.partners.map((p) => (
           <div key={p.id} className={'k-cons-row' + (p.isSelf ? ' is-self' : '')}>
-            <div className="k-cons-cell">
-              {p.isSelf ? (
-                <div className="k-cons-self">
-                  <span className="k-cons-self-badge">Kompania ime</span>
-                  <span className="k-cons-self-name">{p.name}</span>
-                </div>
-              ) : (
+            <div className="k-cons-main">
+              <div className="k-cons-cell">
+                {p.isSelf ? (
+                  <div className="k-cons-self">
+                    <span className="k-cons-self-badge">Kompania ime</span>
+                    <span className="k-cons-self-name">{p.name}</span>
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="P.sh. Konstruksion Plus SH.P.K."
+                    value={p.name}
+                    onChange={(e) => updatePartner(p.id, { name: e.target.value })}
+                  />
+                )}
+              </div>
+              <div className="k-cons-cell">
                 <input
                   type="text"
-                  placeholder="P.sh. Konstruksion Plus SH.P.K."
-                  value={p.name}
-                  onChange={(e) => updatePartner(p.id, { name: e.target.value })}
+                  placeholder="K12345678L"
+                  value={p.nipt}
+                  disabled={p.isSelf}
+                  onChange={(e) => updatePartner(p.id, { nipt: e.target.value })}
                 />
-              )}
-            </div>
-            <div className="k-cons-cell">
-              <input
-                type="text"
-                placeholder="K12345678L"
-                value={p.nipt}
-                disabled={p.isSelf}
-                onChange={(e) => updatePartner(p.id, { nipt: e.target.value })}
-              />
-            </div>
-            <div className="k-cons-cell k-cons-col-pct">
-              <div className="k-cons-pct">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  placeholder="0"
-                  value={p.percent}
-                  onChange={(e) => updatePartner(p.id, { percent: e.target.value })}
-                />
-                <span>%</span>
               </div>
-            </div>
-            <div className="k-cons-cell k-cons-cell-x">
-              {!p.isSelf && (
-                <button
-                  type="button"
-                  className="k-cons-row-x"
-                  onClick={() => removePartner(p.id)}
-                  aria-label="Hiq partnerin">
-                  <span className="material-icons">close</span>
-                </button>
-              )}
+              <div className="k-cons-cell k-cons-cell-email">
+                {p.isSelf ? (
+                  <span className="k-cons-cell-email-self">—</span>
+                ) : (
+                  <div className="k-cons-cell-email-input">
+                    <span className="material-icons">alternate_email</span>
+                    <input
+                      type="email"
+                      aria-label="Email kontakti"
+                      placeholder="Email kontakti"
+                      value={p.email || ''}
+                      readOnly={c.linkSentAll && p.linkSent}
+                      onChange={(e) => updatePartner(p.id, { email: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="k-cons-cell k-cons-col-pct">
+                <div className="k-cons-pct">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    placeholder="0"
+                    value={p.percent}
+                    onChange={(e) => updatePartner(p.id, { percent: e.target.value })}
+                  />
+                  <span>%</span>
+                </div>
+              </div>
+              <div className="k-cons-cell k-cons-cell-x">
+                {!p.isSelf && (
+                  <button
+                    type="button"
+                    className="k-cons-row-x"
+                    onClick={() => removePartner(p.id)}
+                    aria-label="Hiq partnerin">
+                    <span className="material-icons">close</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -564,26 +864,159 @@ function Bashkimi({ form, setConsortium }) {
 
       {!partnersReady && (
         <p className="k-cons-hint">
-          Pasi totali të jetë 100% dhe çdo partner të ketë emër, do mund të shtoni staf, makineri,
-          certifikime dhe licenca të përbashkëta.
+          Pasi totali të jetë 100% dhe çdo partner të ketë emër, do mund të plotësoni kapacitetet
+          (staf, makineri, certifikime, licenca) për secilin partner.
         </p>
       )}
 
       {partnersReady && (
-        <CapacityLists
-          data={c}
-          onOpen={(kind) => setDrawerKind(kind)}
-          onRemove={(storeKey) => removeAt(storeKey)}
-          staffHint="Stafi i përbashkët që do marrë pjesë në këtë bashkim."
-          machineryHint="Mjetet që vihen në dispozicion nga bashkimi."
-        />
+        <div className="k-sup-mode k-cons-mode">
+          <h5>Si do t'i plotësoni kapacitetet e secilit partner?</h5>
+          <div className="k-sup-mode-opts">
+            <button
+              type="button"
+              className={'k-sup-mode-opt' + (c.mode === 'manual' ? ' is-on' : '')}
+              onClick={() => setConsortium('mode')('manual')}>
+              <span className="k-sup-mode-icon"><span className="material-icons">edit_note</span></span>
+              <span className="k-sup-mode-body">
+                <strong>Plotësoj vetë të dhënat për secilin partner</strong>
+                <span>Unë shtoj stafin, makineritë, certifikimet dhe licencat për çdo kompani.</span>
+              </span>
+              <span className="k-sup-mode-radio" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={'k-sup-mode-opt' + (c.mode === 'link' ? ' is-on' : '')}
+              onClick={() => setConsortium('mode')('link')}>
+              <span className="k-sup-mode-icon"><span className="material-icons">link</span></span>
+              <span className="k-sup-mode-body">
+                <strong>Gjenero link për çdo partner</strong>
+                <span>Çdo partner plotëson vetë të dhënat e veta nëpërmjet një linku të sigurt.</span>
+              </span>
+              <span className="k-sup-mode-radio" aria-hidden />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {partnersReady && c.mode === 'manual' && (
+        <div className="k-cons-per-partner-list">
+          {c.partners.filter((p) => !p.isSelf).map((p) => {
+            const isOpen = openPartnerId === p.id;
+            const caps = p.capacities || { staff: [], machinery: [], certificates: [], licenses: [] };
+            return (
+              <section key={p.id} className={'k-cons-per-partner' + (p.isSelf ? ' is-self' : '')}>
+                <button
+                  type="button"
+                  className="k-cons-per-partner-head"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenPartnerId(isOpen ? null : p.id)}>
+                  <div className="k-cons-per-partner-title">
+                    {p.isSelf && <span className="k-cons-self-badge">Kompania ime</span>}
+                    <strong>{p.name || '—'}</strong>
+                    <span className="k-cons-per-partner-pct">{p.percent || 0}%</span>
+                  </div>
+                  <span className="material-icons">{isOpen ? 'expand_less' : 'expand_more'}</span>
+                </button>
+                {isOpen && (
+                  <div className="k-cons-per-partner-body">
+                    <CapacityLists
+                      data={caps}
+                      onOpen={(kind) => { setEditIndex(-1); setDrawerPartnerId(p.id); setDrawerKind(kind); }}
+                      onRemove={(storeKey) => (i) =>
+                        setPartnerCapacity(p.id, storeKey, caps[storeKey].filter((_, idx) => idx !== i))
+                      }
+                      onEdit={(storeKey, i) => {
+                        setDrawerPartnerId(p.id);
+                        setEditIndex(i);
+                        setDrawerKind(STORE_TO_KIND[storeKey]);
+                      }}
+                      staffHint={`Stafi që vë në dispozicion ${p.name || 'kjo shoqëri'}.`}
+                      machineryHint={`Mjetet që vë në dispozicion ${p.name || 'kjo shoqëri'}.`}
+                      extras={{
+                        onPickDoc: (key, label) =>
+                          setPartnerCapacity(p.id, key, { name: label + '.pdf', size: '240 KB' }),
+                        onClearDoc: (key) => setPartnerCapacity(p.id, key, null),
+                      }}
+                    />
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {partnersReady && c.mode === 'link' && (
+        <div className="k-sup-link-panel">
+          <div className="k-sup-link-copy">
+            <h5>Linku për partnerët e bashkimit</h5>
+            <p>
+              Çdo partner do të marrë në email një link të sigurt. Për ta hapur, partneri duhet
+              të vendosë një kod 6-shifror që i dërgohet po te ky email — kështu vetëm personi
+              që ka akses te email-i mund të plotësojë të dhënat.
+            </p>
+          </div>
+
+          {!c.linkSentAll ? (
+            <>
+              {missingEmails.length > 0 && (
+                <div className="k-sup-verify-err">
+                  <span className="material-icons">error</span>
+                  Plotësoni email-in për {missingEmails.length}{' '}
+                  {missingEmails.length === 1 ? 'partner' : 'partnerë'} para se të dërgoni linkun.
+                </div>
+              )}
+              <button
+                type="button"
+                className="k-sup-email-btn"
+                disabled={missingEmails.length > 0 || nonSelfPartners.length === 0}
+                onClick={sendAllLinks}>
+                <span className="material-icons">send</span>
+                Dërgo linkun te të gjithë partnerët
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="k-cons-link-summary">
+                <span className="material-icons">mark_email_read</span>
+                Linku u dërgua te {nonSelfPartners.length}{' '}
+                {nonSelfPartners.length === 1 ? 'partner' : 'partnerë'}.
+              </div>
+              {nonSelfPartners.map((p) => (
+                <div key={p.id} className="k-sup-link-card">
+                  <div className="k-sup-link-head">
+                    <span className="material-icons">mark_email_read</span>
+                    <div>
+                      <strong>{p.name || '—'}</strong>
+                      <span>Linku u dërgua te {p.email}</span>
+                    </div>
+                    <span className="k-sup-link-pill">Në pritje</span>
+                  </div>
+                  <div className="k-sup-link-url">
+                    <span className="material-icons">link</span>
+                    <input readOnly value={p.shareLink} />
+                    <button
+                      type="button"
+                      className="k-sup-link-copybtn"
+                      onClick={() => { try { navigator.clipboard.writeText(p.shareLink); } catch {} }}>
+                      <span className="material-icons">content_copy</span>
+                      Kopjo
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       )}
 
       {window.AddIsoDrawer && (
         <window.AddIsoDrawer
           open={!!drawerKind}
           kind={drawerKind || 'staff'}
-          onClose={() => setDrawerKind(null)}
+          initial={editInitial}
+          onClose={() => { setDrawerKind(null); setDrawerPartnerId(null); setEditIndex(-1); }}
           onSave={handleDrawerSave}
         />
       )}
@@ -753,7 +1186,7 @@ const DOKUMENTACIONI_LIST = [
   { id: 'bilanci',  name: 'Bilanci', required: true, category: 'financiar' },
   { id: 'specifika',name: 'Deklaratë në përmbushje me specifikimet teknike', required: true, category: 'teknik' },
   { id: 'grafiku',  name: 'Deklaratë për grafikun e punimeve / shërbimeve / furnizimit', required: true, category: 'teknik' },
-  { id: 'manuali-cmimeve', name: 'Manuali i çmimeve të ndërtimit (2026)', required: true, category: 'preventivi', system: true, year: 2026 },
+  { id: 'manuali-cmimeve', name: 'Manuali i çmimeve të ndërtimit (2023)', required: true, category: 'preventivi', system: true, year: 2023, validFor: 2026 },
   { id: 'preventivi-bosh', name: 'Preventivi bosh — pa çmime', required: true, category: 'preventivi', needsUpload: true },
   { id: 'metodologjia', name: 'Metodologjia',  required: true, category: 'metodologjia' },
 ];
@@ -1132,17 +1565,332 @@ function VeteDeklarimForm({ form, setForm }) {
 }
 
 // ---------- Preventivi: sistem-supplied manual + user upload ----------
+// Real data lives in `manuali-cmimeve-data.json` (exported from the official
+// 2023 construction manual — ~2,247 rows across 4 manuals). The viewer loads
+// it once on mount and lets the user drill from Manual → Kategoria → Zëra.
+
+const MANUAL_LABELS = {
+  'Manual 1': { title: 'Manuali 1 — Prodhimi i materialeve të ndërtimit', icon: 'foundation' },
+  'Manual 2': { title: 'Manuali 2 — Punime ndërtimi dhe instalime', icon: 'home_work' },
+  'Manual 3': { title: 'Manuali 3 — Punime infrastrukturë dhe rrugore', icon: 'alt_route' },
+  'Manual 4': { title: 'Manuali 4 — Gaz, naftësjellës dhe analiza teknike', icon: 'local_gas_station' },
+};
+
+function formatCurrency(n) {
+  if (n === null || n === undefined || n === '' || isNaN(n)) return '—';
+  const num = Number(n);
+  return num.toLocaleString('sq-AL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Shared loader for the construction manual — cached in module scope so the
+// Preventivi editor and the Manual viewer don't double-fetch.
+let __manualDataCache = null;
+let __manualDataPromise = null;
+function useManualData() {
+  const [data, setData]     = React.useState(__manualDataCache);
+  const [error, setError]   = React.useState(null);
+  React.useEffect(() => {
+    if (__manualDataCache) { setData(__manualDataCache); return; }
+    if (!__manualDataPromise) {
+      __manualDataPromise = fetch('manuali-cmimeve-data.json')
+        .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+        .then((rows) => { __manualDataCache = rows; return rows; });
+    }
+    let cancelled = false;
+    __manualDataPromise
+      .then((rows) => { if (!cancelled) setData(rows); })
+      .catch((e) => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, []);
+  return { data, error };
+}
+
+// Flatten the preventivi-sample JSON ({rows: [...]}) into a linear stream of
+// section headers + data rows the editor can render directly.
+function flattenPreventivi(sample) {
+  if (!sample || !Array.isArray(sample.rows)) return [];
+  const out = [];
+  let sectionId = null;
+  for (const r of sample.rows) {
+    if (r.sectionNr != null) {
+      sectionId = 's' + r.sectionNr;
+      out.push({ type: 'section', id: sectionId, nr: r.sectionNr, title: r.sectionTitle });
+    } else if (r.kodi != null) {
+      out.push({
+        type: 'row',
+        id: (sectionId || 's0') + '-r' + r.nr,
+        sectionId,
+        nr: r.nr,
+        kodi: r.kodi,
+        emertimi: r.emertimi,
+        njesia: r.njesia,
+        sasia: r.sasia,
+        cmimi: null,
+        vlefta: null,
+        match: null,
+        source: null,
+        candidates: [],
+      });
+    }
+  }
+  return out;
+}
+
+// Best-effort auto-match preventivi rows to the official manual, keyed by kodi.
+// Falls back to stripping the trailing letter suffix (e.g. '3.89/a' → '3.89').
+function findCandidates(kodi, data) {
+  if (!kodi) return [];
+  const parts = String(kodi).split('/')[0].split('.');
+  const prefix = parts.slice(0, 2).join('.');
+  if (!prefix) return [];
+  const out = [];
+  for (const m of data) {
+    if (!m.kodi) continue;
+    if (String(m.kodi).startsWith(prefix)) {
+      out.push(m);
+      if (out.length >= 5) break;
+    }
+  }
+  return out;
+}
+
+function matchRowToManual(row, byCode, allData) {
+  if (row.type !== 'row') return row;
+  const hit = byCode.get(String(row.kodi));
+  if (hit) {
+    return { ...row, cmimi: hit.totali, vlefta: +(hit.totali * row.sasia).toFixed(2),
+             match: 'auto', source: hit, candidates: [] };
+  }
+  const base = String(row.kodi).replace(/[a-zA-Z]+$/, '');
+  const hit2 = base !== row.kodi ? byCode.get(base) : null;
+  if (hit2) {
+    return { ...row, cmimi: hit2.totali, vlefta: +(hit2.totali * row.sasia).toFixed(2),
+             match: 'auto', source: hit2, candidates: [] };
+  }
+  return { ...row, cmimi: null, vlefta: null, match: 'none', source: null,
+           candidates: findCandidates(row.kodi, allData) };
+}
+
+function autoMatchAll(rows, manualData) {
+  if (!manualData) return rows;
+  const byCode = new Map(manualData.map((m) => [String(m.kodi), m]));
+  return rows.map((r) => {
+    // Preserve manual overrides — don't re-auto rows the user touched.
+    if (r.match === 'manual' || r.match === 'chosen') return r;
+    return matchRowToManual(r, byCode, manualData);
+  });
+}
+
+function ManualSearchResults({ data, manualFilter, query, onOpenCategory }) {
+  const q = query.trim().toLowerCase();
+
+  const results = React.useMemo(() => {
+    if (!data || !q) return { items: [], categories: [], truncated: false };
+    const scope = manualFilter ? data.filter((r) => r.manuali === manualFilter) : data;
+
+    // Item matches (by code or name)
+    const matched = [];
+    const MAX = 200;
+    for (const r of scope) {
+      if (matched.length >= MAX) break;
+      if ((r.kodi || '').toLowerCase().includes(q) ||
+          (r.emertimi || '').toLowerCase().includes(q)) {
+        matched.push(r);
+      }
+    }
+
+    // Category matches (name contains query) — group distinct {manuali, kategoria}
+    const catMap = new Map();
+    for (const r of scope) {
+      if ((r.kategoria || '').toLowerCase().includes(q)) {
+        const key = r.manuali + '|' + r.kategoria;
+        if (!catMap.has(key)) {
+          catMap.set(key, { manuali: r.manuali, kategoria: r.kategoria, count: 0 });
+        }
+        catMap.get(key).count += 1;
+      }
+    }
+    const categories = Array.from(catMap.values()).sort((a, b) => b.count - a.count);
+
+    // Count total item matches (not just capped)
+    let totalMatched = 0;
+    for (const r of scope) {
+      if ((r.kodi || '').toLowerCase().includes(q) ||
+          (r.emertimi || '').toLowerCase().includes(q)) totalMatched += 1;
+    }
+
+    return { items: matched, categories, truncated: totalMatched > MAX, totalMatched };
+  }, [data, manualFilter, q]);
+
+  return (
+    <div className="k-man-results">
+      {results.categories.length > 0 && (
+        <div className="k-man-results-block">
+          <div className="k-man-results-head">
+            Kategori ({results.categories.length})
+          </div>
+          <div className="k-man-cats">
+            {results.categories.map((c) => (
+              <button key={c.manuali + '|' + c.kategoria} type="button"
+                      className="k-man-cat"
+                      onClick={() => onOpenCategory(c.manuali, c.kategoria)}>
+                <span className="k-man-cat-title">{c.kategoria}</span>
+                <span className="k-man-cat-mmeta">{MANUAL_LABELS[c.manuali]?.title || c.manuali}</span>
+                <span className="k-man-cat-count">{c.count}</span>
+                <span className="material-icons k-man-cat-caret">chevron_right</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="k-man-results-block">
+        <div className="k-man-results-head">
+          Zëra ({results.totalMatched || 0})
+          {results.truncated && (
+            <span className="k-man-results-note">
+              · shfaqen 200 të parët — ngushto kërkimin për më shumë saktësi
+            </span>
+          )}
+        </div>
+        {results.items.length === 0 && results.categories.length === 0 ? (
+          <div className="k-man-empty">
+            <span className="material-icons">search_off</span>
+            <div>
+              <strong>Asnjë rezultat për "{query}"</strong>
+              <p>Provo një fjalë kyçe tjetër ose një kod pa pikë (p.sh. <code>3.1</code>).</p>
+            </div>
+          </div>
+        ) : results.items.length === 0 ? null : (
+          <div className="k-man-table-wrap">
+            <table className="k-man-table">
+              <thead>
+                <tr>
+                  <th style={{ width: 90 }}>Kodi</th>
+                  <th>Emërtimi</th>
+                  {!manualFilter && <th style={{ width: 120 }}>Manuali</th>}
+                  <th style={{ width: 60 }}>Njësia</th>
+                  <th className="is-num is-total" style={{ width: 120 }}>Totali</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.items.map((r, i) => (
+                  <tr key={(r.kodi || '') + i}
+                      className="k-man-row-clickable"
+                      onClick={() => onOpenCategory(r.manuali, r.kategoria)}>
+                    <td className="k-man-td-code">{r.kodi}</td>
+                    <td>{r.emertimi}</td>
+                    {!manualFilter && (
+                      <td className="k-man-td-unit">{r.manuali}</td>
+                    )}
+                    <td className="k-man-td-unit">{r.njesia}</td>
+                    <td className="is-num is-total">{formatCurrency(r.totali)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ManualiCmimeveViewer({ year }) {
-  // Mock "categories" pulled from a theoretical construction-price manual —
-  // enough to make the viewer feel substantive without real data.
-  const sections = [
-    { id: 'a', title: 'A. Punime ndërtimi të përgjithshme', count: 142, updated: '14 Janar 2026' },
-    { id: 'b', title: 'B. Punime hidro-sanitare', count: 68, updated: '09 Shkurt 2026' },
-    { id: 'c', title: 'C. Punime elektrike', count: 54, updated: '02 Shkurt 2026' },
-    { id: 'd', title: 'D. Punime termike dhe ventilim', count: 41, updated: '22 Janar 2026' },
-    { id: 'e', title: 'E. Punime rrugore dhe asfaltim', count: 87, updated: '18 Dhjet 2025' },
-    { id: 'f', title: 'F. Punime special. metalike', count: 33, updated: '05 Janar 2026' },
-  ];
+  const [data, setData]       = React.useState(null);
+  const [loadErr, setLoadErr] = React.useState(null);
+  const [manual, setManual]   = React.useState(null);   // 'Manual 1' | ...
+  const [kategoria, setKat]   = React.useState(null);   // category string
+  const [query, setQuery]     = React.useState('');
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch('manuali-cmimeve-data.json')
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then((rows) => { if (!cancelled) setData(rows); })
+      .catch((e) => { if (!cancelled) setLoadErr(e.message); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Group once: manual -> kategoria -> items
+  const tree = React.useMemo(() => {
+    if (!data) return null;
+    const t = {};
+    for (const row of data) {
+      const m = row.manuali || 'I panjohur';
+      const k = row.kategoria || 'Pa kategori';
+      if (!t[m]) t[m] = {};
+      if (!t[m][k]) t[m][k] = [];
+      t[m][k].push(row);
+    }
+    return t;
+  }, [data]);
+
+  const manualList = React.useMemo(() => {
+    if (!tree) return [];
+    return Object.keys(tree).sort().map((m) => {
+      const cats = tree[m];
+      const catCount = Object.keys(cats).length;
+      const itemCount = Object.values(cats).reduce((a, xs) => a + xs.length, 0);
+      return { key: m, catCount, itemCount };
+    });
+  }, [tree]);
+
+  const categoryList = React.useMemo(() => {
+    if (!tree || !manual) return [];
+    const cats = tree[manual] || {};
+    return Object.keys(cats)
+      .map((k) => ({ key: k, count: cats[k].length }))
+      .sort((a, b) => b.count - a.count);
+  }, [tree, manual]);
+
+  const items = React.useMemo(() => {
+    if (!tree || !manual || !kategoria) return [];
+    let rows = tree[manual][kategoria] || [];
+    const q = query.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter((r) =>
+        (r.kodi || '').toLowerCase().includes(q) ||
+        (r.emertimi || '').toLowerCase().includes(q)
+      );
+    }
+    return rows;
+  }, [tree, manual, kategoria, query]);
+
+  const totalItems = React.useMemo(() => {
+    if (!data) return 0;
+    return data.length;
+  }, [data]);
+
+  // Loading / error states
+  if (loadErr) {
+    return (
+      <div className="k-man">
+        <div className="k-man-empty">
+          <span className="material-icons">error_outline</span>
+          <div>
+            <strong>S'u ngarkua manuali.</strong>
+            <p>{loadErr}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tree) {
+    return (
+      <div className="k-man">
+        <div className="k-man-empty">
+          <span className="material-icons k-man-spin">progress_activity</span>
+          <div>
+            <strong>Duke ngarkuar manualin…</strong>
+            <p>~2,247 zëra po përgatiten për shfletim.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="k-man">
       <header className="k-man-head">
@@ -1151,51 +1899,750 @@ function ManualiCmimeveViewer({ year }) {
         </div>
         <div>
           <div className="k-man-eyebrow">Sistem · Burim zyrtar</div>
-          <h3>Manuali i çmimeve të ndërtimit</h3>
+          <h3>Manuali i çmimeve të ndërtimit ({year})</h3>
           <p>
-            Lista zyrtare e çmimeve të njësisë e përditësuar për vitin <b>{year}</b>.
-            Ky manual ngarkohet automatikisht në dosje për referencë krahasimi me preventivin tuaj.
+            Lista zyrtare e çmimeve të njësisë, botim <b>{year}</b>, në fuqi për ofertat e vitit <b>2026</b>.
+            {manual && kategoria
+              ? ` ${items.length} zëra në kategorinë e zgjedhur.`
+              : ` ${totalItems.toLocaleString('sq-AL')} zëra, 4 manuale.`}
           </p>
         </div>
         <div className="k-man-year">
-          <span className="k-man-year-label">Viti</span>
-          <span className="k-man-year-value">{year}</span>
+          <span className="k-man-year-label">I vlefshëm për</span>
+          <span className="k-man-year-value">2026</span>
         </div>
       </header>
-      <div className="k-man-sections">
-        {sections.map((s) => (
-          <div key={s.id} className="k-man-section">
-            <div className="k-man-section-main">
-              <span className="k-man-section-title">{s.title}</span>
-              <span className="k-man-section-meta">{s.count} zëra · Përditësuar {s.updated}</span>
-            </div>
-            <button type="button" className="k-man-section-open" title="Shiko zërat">
-              <span className="material-icons">chevron_right</span>
-            </button>
+
+      {/* Breadcrumb */}
+      {(manual || kategoria) && (
+        <div className="k-man-crumbs">
+          <button type="button" className="k-man-crumb"
+                  onClick={() => { setManual(null); setKat(null); setQuery(''); }}>
+            <span className="material-icons">home</span>
+            Të gjitha manualet
+          </button>
+          {manual && (
+            <>
+              <span className="k-man-crumb-sep material-icons">chevron_right</span>
+              <button type="button"
+                      className={'k-man-crumb' + (kategoria ? '' : ' is-current')}
+                      onClick={() => { setKat(null); setQuery(''); }}>
+                {MANUAL_LABELS[manual]?.title || manual}
+              </button>
+            </>
+          )}
+          {kategoria && (
+            <>
+              <span className="k-man-crumb-sep material-icons">chevron_right</span>
+              <span className="k-man-crumb is-current">{kategoria}</span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Global search (visible on levels 1 & 2) */}
+      {!kategoria && (
+        <div className="k-man-toolbar">
+          <div className="k-man-search">
+            <span className="material-icons">search</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={manual
+                ? 'Kërko në këtë manual: kategori, kod, ose emërtim…'
+                : 'Kërko në të gjitha manualet: kategori, kod, ose emërtim…'}
+            />
+            {query && (
+              <button type="button" className="k-man-search-clear"
+                      onClick={() => setQuery('')} aria-label="Pastro">
+                <span className="material-icons">close</span>
+              </button>
+            )}
           </div>
-        ))}
-      </div>
-      <footer className="k-man-foot">
-        <span className="material-icons">verified</span>
-        <span>I ngarkuar automatikisht nga sistemi. Nuk kërkon veprim nga ju.</span>
-      </footer>
+        </div>
+      )}
+
+      {/* Level 1 — Manual list (no query) */}
+      {!manual && !query.trim() && (
+        <div className="k-man-sections">
+          {manualList.map((m) => {
+            const meta = MANUAL_LABELS[m.key] || { title: m.key, icon: 'description' };
+            return (
+              <button key={m.key} type="button" className="k-man-section"
+                      onClick={() => setManual(m.key)}>
+                <span className="k-man-section-ico">
+                  <span className="material-icons">{meta.icon}</span>
+                </span>
+                <div className="k-man-section-main">
+                  <span className="k-man-section-title">{meta.title}</span>
+                  <span className="k-man-section-meta">
+                    {m.catCount} kategori · {m.itemCount.toLocaleString('sq-AL')} zëra
+                  </span>
+                </div>
+                <span className="k-man-section-open">
+                  <span className="material-icons">chevron_right</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Level 2 — Category list for a manual (no query) */}
+      {manual && !kategoria && !query.trim() && (
+        <div className="k-man-cats">
+          {categoryList.map((c) => (
+            <button key={c.key} type="button" className="k-man-cat"
+                    onClick={() => setKat(c.key)}>
+              <span className="k-man-cat-title">{c.key}</span>
+              <span className="k-man-cat-count">
+                {c.count} {c.count === 1 ? 'zë' : 'zëra'}
+              </span>
+              <span className="material-icons k-man-cat-caret">chevron_right</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Global / per-manual search results (levels 1 & 2) */}
+      {!kategoria && query.trim() && (
+        <ManualSearchResults
+          data={data}
+          manualFilter={manual}
+          query={query}
+          onOpenCategory={(m, k) => { setManual(m); setKat(k); setQuery(''); }}
+        />
+      )}
+
+      {/* Level 3 — Items table for a category */}
+      {manual && kategoria && (
+        <>
+          <div className="k-man-toolbar">
+            <div className="k-man-search">
+              <span className="material-icons">search</span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Kërko sipas kodit ose emërtimit…"
+              />
+              {query && (
+                <button type="button" className="k-man-search-clear"
+                        onClick={() => setQuery('')} aria-label="Pastro">
+                  <span className="material-icons">close</span>
+                </button>
+              )}
+            </div>
+            <span className="k-man-count">
+              {items.length} / {(tree[manual][kategoria] || []).length} zëra
+            </span>
+          </div>
+
+          <div className="k-man-table-wrap">
+            <table className="k-man-table">
+              <thead>
+                <tr>
+                  <th style={{ width: 90 }}>Kodi</th>
+                  <th>Emërtimi</th>
+                  <th style={{ width: 60 }}>Njësia</th>
+                  <th className="is-num" style={{ width: 110 }}>Puntori</th>
+                  <th className="is-num" style={{ width: 110 }}>Materiale</th>
+                  <th className="is-num" style={{ width: 110 }}>Makineri</th>
+                  <th className="is-num is-total" style={{ width: 120 }}>Totali</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="k-man-empty-row">
+                      Asnjë zë nuk përputhet me kërkimin.
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((r, i) => (
+                    <tr key={(r.kodi || '') + i}>
+                      <td className="k-man-td-code">{r.kodi}</td>
+                      <td>{r.emertimi}</td>
+                      <td className="k-man-td-unit">{r.njesia}</td>
+                      <td className="is-num">{formatCurrency(r.puntori)}</td>
+                      <td className="is-num">{formatCurrency(r.materiale)}</td>
+                      <td className="is-num">{formatCurrency(r.makineri)}</td>
+                      <td className="is-num is-total">{formatCurrency(r.totali)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }
 
+// ---------- Duration field (number + unit segmented control) ----------
+function DurationField({ label, value = {}, units = ['dite', 'jave'],
+                         valueKey = 'kohe', unitKey = 'njesia', onChange }) {
+  const kohe   = value[valueKey] ?? '';
+  const njesia = value[unitKey] || units[0];
+  const unitLabel = (u) => u === 'dite' ? 'ditë' : u === 'jave' ? 'javë' : u;
+  return (
+    <div className={'k-field' + (label ? '' : ' k-field-bare')}>
+      {label && <label className="k-field-label">{label}</label>}
+      <div className="k-dek-dur">
+        <input
+          type="number"
+          min="0"
+          className="k-field-input k-dek-dur-num"
+          placeholder="0"
+          value={kohe}
+          onChange={(e) => onChange({ ...value, [valueKey]: e.target.value, [unitKey]: njesia })}
+        />
+        <div className="k-dek-dur-units" role="tablist">
+          {units.map((u) => (
+            <button
+              key={u}
+              type="button"
+              className={'k-dek-dur-unit' + (njesia === u ? ' is-on' : '')}
+              onClick={() => onChange({ ...value, [valueKey]: kohe, [unitKey]: u })}>
+              {unitLabel(u)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Deklarimet step (inputs that feed the methodology generator) ----------
+function DeklarimetStep({ form, setForm }) {
+  const m = form.metodologjia || {};
+  const setM = (patch) =>
+    setForm((p) => ({ ...p, metodologjia: { ...(p.metodologjia || {}), ...patch } }));
+
+  const inputRef = React.useRef(null);
+
+  const onPickExtra = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const next = [
+      ...(m.docsExtra || []),
+      ...files.map((f, i) => ({
+        id: 'doc-' + Date.now() + '-' + i,
+        name: f.name,
+        size: f.size,
+      })),
+    ];
+    setM({ docsExtra: next });
+    e.target.value = '';
+  };
+
+  const removeExtra = (id) =>
+    setM({ docsExtra: (m.docsExtra || []).filter((d) => d.id !== id) });
+
+  return (
+    <div className="k-card">
+      <Section
+        title="Mobilizimi i kantierit"
+        desc="Sa kohë ju duhet për të filluar punën pas nënshkrimit të kontratës.">
+        <DurationField
+          value={m.mobilizimi}
+          onChange={(v) => setM({ mobilizimi: v })}
+        />
+      </Section>
+
+      <Section
+        title="Afati i punimeve"
+        desc={
+          <>
+            Afati juaj i propozuar. Si default merret nga grafiku fillestar:&nbsp;
+            <b>{form.grafiku || '— i paplotësuar në Hapin 1 —'}</b>.
+          </>
+        }>
+        <label className="k-dek-toggle">
+          <input
+            type="checkbox"
+            checked={!!m.afatiPunimeve?.sameAsStep1}
+            onChange={(e) => setM({
+              afatiPunimeve: {
+                ...(m.afatiPunimeve || {}),
+                sameAsStep1: e.target.checked,
+              },
+            })} />
+          <span>Përdor të njëjtin afat si në Hapin 1</span>
+        </label>
+        {!m.afatiPunimeve?.sameAsStep1 && (
+          <DurationField
+            value={m.afatiPunimeve}
+            onChange={(v) => setM({ afatiPunimeve: { ...v, sameAsStep1: false } })}
+          />
+        )}
+      </Section>
+
+      <Section
+        title="Garancia e punimeve"
+        desc="Periudha e garancisë që ofron kompania pas përfundimit të punimeve.">
+        <DurationField
+          label="Periudha e garancisë"
+          value={m.garancia}
+          unitKey="njesiaPer"
+          valueKey="periudha"
+          units={['muaj', 'vit']}
+          onChange={(v) => setM({ garancia: { ...(m.garancia || {}), ...v } })}
+        />
+      </Section>
+
+      <Section
+        title="Dokumente shtesë për metodologjinë"
+        desc="Çdo dokument i ngarkuar këtu i shtohet input-it të gjeneruesit të metodologjisë.">
+        <button
+          type="button"
+          className="k-prev-drop"
+          onClick={() => inputRef.current && inputRef.current.click()}>
+          <span className="material-icons">cloud_upload</span>
+          <div>
+            <div className="k-prev-drop-title">Ngarko dokumente shtesë</div>
+            <div className="k-prev-drop-hint">PDF / Word / Excel</div>
+          </div>
+          <span className="k-prev-drop-cta">Zgjidh skedarë</span>
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.xls,.xlsx"
+          style={{ display: 'none' }}
+          onChange={onPickExtra}
+        />
+        {(m.docsExtra || []).length > 0 && (
+          <ul className="k-dek-extra">
+            {m.docsExtra.map((d) => (
+              <li key={d.id}>
+                <span className="material-icons">description</span>
+                <span className="k-dek-extra-name">{d.name}</span>
+                <span className="k-dek-extra-size">
+                  {d.size ? `${Math.max(1, Math.round(d.size / 1024))} KB` : ''}
+                </span>
+                <button
+                  type="button"
+                  className="k-dek-extra-rm"
+                  onClick={() => removeExtra(d.id)}
+                  aria-label="Hiq">
+                  <span className="material-icons">close</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="k-dek-reuse">
+          <span className="material-icons">auto_awesome</span>
+          <div>
+            <strong>Dokumentet e hapave të mëparshëm përdoren automatikisht</strong>
+            <p>
+              Sistemi merr parasysh ISO-t, punët e ngjashme, CV-të e stafit, makineritë e
+              deklaruara dhe preventivin që keni plotësuar për të gjeneruar një metodologji
+              të personalizuar.
+            </p>
+          </div>
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+// ---------- Metodologjia generator (AI-powered, simulated) ----------
+function MetodologjiaGenerator({ form, setForm, selectedDocs }) {
+  const meta = form.metodologjia || {};
+  const generated = meta.generated;
+  const [progress, setProgress] = React.useState(0);
+  const [step, setStep]         = React.useState(null); // null | 'thinking' | 'writing' | 'done'
+  const timersRef = React.useRef([]);
+
+  const clearTimers = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  };
+  React.useEffect(() => () => clearTimers(), []);
+
+  // Summarize inputs the generator "sees".
+  const inputs = React.useMemo(() => {
+    const picked = new Set(selectedDocs || []);
+    const docs = (DOKUMENTACIONI_LIST || []).filter((d) => picked.has(d.id))
+      .map((d) => d.name);
+
+    const capCount = (k) => {
+      const own = ((form.consortium && form.consortium.partners) || [])
+        .reduce((a, p) => a + ((p.capacities && p.capacities[k]) || []).length, 0);
+      const support = ((form.support && form.support[k]) || []).length;
+      return own + support;
+    };
+
+    return {
+      basics: {
+        objekti: form.objekti || '—',
+        autoriteti: form.autoriteti || '—',
+        fondi: form.fondi || '—',
+        lloji: form.lloji || 'Pjesëmarrje e vetme',
+      },
+      afati: meta.afatiPunimeve?.sameAsStep1
+        ? (form.grafiku || '—')
+        : ((meta.afatiPunimeve?.kohe || '—') + ' ' + (meta.afatiPunimeve?.njesia === 'jave' ? 'javë' : 'ditë')),
+      mobilizimi: (meta.mobilizimi?.kohe || '—') + ' ' + (meta.mobilizimi?.njesia === 'jave' ? 'javë' : 'ditë'),
+      garancia: (meta.garancia?.periudha || '—') + ' ' + (meta.garancia?.njesiaPer || 'muaj'),
+      docs,
+      preventivi: form.preventivi?.rows?.filter((r) => r.type === 'row').length || 0,
+      staff: capCount('staff'),
+      machinery: capCount('machinery'),
+      extras: (meta.docsExtra || []).length,
+    };
+  }, [form, meta, selectedDocs]);
+
+  const generate = () => {
+    clearTimers();
+    setProgress(0);
+    setStep('thinking');
+    // Simulated streaming: progress ticks up, swap stage at 45%
+    let p = 0;
+    const tick = () => {
+      p += Math.random() * 8 + 3;
+      if (p > 100) p = 100;
+      setProgress(Math.round(p));
+      if (p >= 45 && p < 48) setStep('writing');
+      if (p < 100) {
+        timersRef.current.push(setTimeout(tick, 180 + Math.random() * 120));
+      } else {
+        setStep('done');
+        setForm((f) => ({
+          ...f,
+          metodologjia: {
+            ...(f.metodologjia || {}),
+            generated: {
+              at: Date.now(),
+              sections: buildMetodologjiaSections(inputs),
+            },
+          },
+        }));
+      }
+    };
+    timersRef.current.push(setTimeout(tick, 200));
+  };
+
+  const regenerate = () => {
+    setForm((f) => ({
+      ...f,
+      metodologjia: { ...(f.metodologjia || {}), generated: null },
+    }));
+    setStep(null);
+    setProgress(0);
+    setTimeout(generate, 40);
+  };
+
+  // Idle state — show ingredients + "Generate" CTA
+  if (!generated && step !== 'thinking' && step !== 'writing') {
+    return (
+      <div className="k-meto">
+        <header className="k-meto-hero">
+          <div className="k-meto-hero-ico">
+            <span className="material-icons">auto_awesome</span>
+          </div>
+          <div>
+            <div className="k-meto-eyebrow">Gjenerim me AI</div>
+            <h3>Gjenero metodologjinë për këtë dosje</h3>
+            <p>
+              Sistemi kombinon të dhënat e dosjes, preventivin, dokumentet e përzgjedhura
+              dhe deklarimet e hapit të kaluar për të prodhuar një metodologji të
+              personalizuar për <b>{inputs.basics.objekti}</b>.
+            </p>
+          </div>
+        </header>
+
+        <div className="k-meto-ingredients">
+          <div className="k-meto-ing-head">
+            <span className="material-icons">inventory_2</span>
+            <span>Burimet që përdoren për gjenerim</span>
+          </div>
+          <ul className="k-meto-ing-list">
+            <IngredientRow icon="description" label="Të dhënat e dosjes"
+              value={`${inputs.basics.autoriteti} · ${inputs.basics.lloji}`} />
+            <IngredientRow icon="schedule" label="Afati i punimeve" value={inputs.afati} />
+            <IngredientRow icon="play_arrow" label="Mobilizimi" value={inputs.mobilizimi} />
+            <IngredientRow icon="verified_user" label="Garancia" value={inputs.garancia} />
+            <IngredientRow icon="calculate" label="Preventivi"
+              value={`${inputs.preventivi} zëra të plotësuara`} />
+            <IngredientRow icon="groups" label="Stafi & makineritë"
+              value={`${inputs.staff} staf · ${inputs.machinery} makineri`} />
+            <IngredientRow icon="folder_open" label="Dokumentet e përzgjedhura"
+              value={`${inputs.docs.length} dokumente`} />
+            {inputs.extras > 0 && (
+              <IngredientRow icon="attachment" label="Dokumente shtesë"
+                value={`${inputs.extras} të ngarkuara në hapin e mëparshëm`} />
+            )}
+          </ul>
+        </div>
+
+        <button type="button" className="k-meto-gen-btn" onClick={generate}>
+          <span className="material-icons">auto_awesome</span>
+          Gjenero metodologjinë me AI
+        </button>
+        <p className="k-meto-foot">
+          Gjenerimi merr ~10–15 sekonda. Mund ta rigjenerosh ose ta redaktosh më pas.
+        </p>
+      </div>
+    );
+  }
+
+  // Generating state
+  if (step === 'thinking' || step === 'writing') {
+    const stageLabel = step === 'thinking'
+      ? 'Po lexon dokumentet dhe të dhënat…'
+      : 'Po shkruan metodologjinë…';
+    return (
+      <div className="k-meto is-generating">
+        <div className="k-meto-gen-card">
+          <div className="k-meto-gen-ico">
+            <span className="material-icons k-meto-spin">autorenew</span>
+          </div>
+          <div className="k-meto-gen-main">
+            <div className="k-meto-gen-stage">{stageLabel}</div>
+            <div className="k-meto-gen-bar">
+              <div className="k-meto-gen-fill" style={{ width: progress + '%' }} />
+            </div>
+            <div className="k-meto-gen-pct">{progress}%</div>
+          </div>
+        </div>
+        <ul className="k-meto-gen-steps">
+          <GenStep done={progress > 5}  label="Lexuar të dhënat e dosjes" />
+          <GenStep done={progress > 20} label="Analizuar preventivin dhe manualin 2023" />
+          <GenStep done={progress > 45} label="Përpunuar dokumentet e përzgjedhura" />
+          <GenStep done={progress > 70} label="Strukturuar metodologjinë sipas standardit" />
+          <GenStep done={progress > 95} label="Formatuar dokumentin PDF" />
+        </ul>
+      </div>
+    );
+  }
+
+  // Done — show generated document
+  return (
+    <div className="k-meto">
+      <header className="k-meto-done-head">
+        <div className="k-meto-done-badge">
+          <span className="material-icons">check_circle</span>
+          Metodologjia u gjenerua
+        </div>
+        <div className="k-meto-done-actions">
+          <button type="button" className="k-prev-file-btn" onClick={regenerate}>
+            <span className="material-icons">autorenew</span>
+            Rigjenero
+          </button>
+        </div>
+      </header>
+
+      <article className="k-meto-doc">
+        <div className="k-meto-doc-stamp">
+          <b>METODOLOGJIA E REALIZIMIT TË OBJEKTIT</b>
+          <span>Ref. {inputs.basics.autoriteti} · {new Date(generated.at).toLocaleDateString('sq-AL')}</span>
+        </div>
+        <h2 className="k-meto-doc-h1">{inputs.basics.objekti}</h2>
+        <p className="k-meto-doc-lead">
+          Kompania <b>Kompania Ime SH.P.K.</b>, me NIPT <b>L01234567A</b>, paraqet më poshtë
+          metodologjinë e detajuar për realizimin e objektit të kontratës, duke u bazuar në
+          kërkesat e autoritetit kontraktor <b>{inputs.basics.autoriteti}</b> dhe kapacitetet
+          tona operative.
+        </p>
+        {generated.sections.map((s, i) => (
+          <section key={i} className="k-meto-doc-sec">
+            <h3>{i + 1}. {s.title}</h3>
+            {s.paragraphs.map((p, j) => (
+              <p key={j}>{renderBold(p)}</p>
+            ))}
+          </section>
+        ))}
+        <div className="k-meto-doc-sign">
+          <div>
+            <span>Data</span>
+            <b>{new Date(generated.at).toLocaleDateString('sq-AL')}</b>
+          </div>
+          <div>
+            <span>Firma & vula</span>
+            <div className="k-doc-paper-stamp-box" aria-hidden>K.I.</div>
+          </div>
+        </div>
+      </article>
+    </div>
+  );
+}
+
+// Render a paragraph with inline **bold** markers (our template uses [[text]]
+// markers, split into alternating text/bold React nodes — safer than
+// dangerouslySetInnerHTML).
+function renderBold(text) {
+  const parts = String(text).split(/\[\[(.+?)\]\]/g);
+  return parts.map((p, i) => (i % 2 === 1 ? <b key={i}>{p}</b> : <React.Fragment key={i}>{p}</React.Fragment>));
+}
+
+function IngredientRow({ icon, label, value }) {
+  return (
+    <li className="k-meto-ing-row">
+      <span className="material-icons">{icon}</span>
+      <span className="k-meto-ing-label">{label}</span>
+      <span className="k-meto-ing-value">{value}</span>
+    </li>
+  );
+}
+
+function GenStep({ done, label }) {
+  return (
+    <li className={'k-meto-gen-step' + (done ? ' is-done' : '')}>
+      <span className="material-icons">
+        {done ? 'check_circle' : 'radio_button_unchecked'}
+      </span>
+      {label}
+    </li>
+  );
+}
+
+// Template text — what the "AI" produces. In production this would be a real
+// streamed completion from a model, receiving the full form as context.
+// Bold spans use [[text]] markers which renderBold() converts to <b>.
+function buildMetodologjiaSections(i) {
+  const autoriteti = i.basics.autoriteti;
+  const objekti    = i.basics.objekti;
+  const afati      = i.afati;
+  const mob        = i.mobilizimi;
+  const gar        = i.garancia;
+
+  return [
+    {
+      title: 'Qasja e përgjithshme',
+      paragraphs: [
+        `Objekti [[${objekti}]] do të realizohet në përputhje të plotë me specifikimet teknike të kontraktorit publik [[${autoriteti}]], duke zbatuar standardet shqiptare të ndërtimit (Manuali i çmimeve 2023) dhe praktikat më të mira të sektorit.`,
+        `Qasja jonë bazohet në tre shtylla: (1) planifikim i detajuar paraprak, (2) kontroll i vazhdueshëm i cilësisë në terren, (3) raportim transparent te autoriteti kontraktor në çdo fazë kryesore.`,
+      ],
+    },
+    {
+      title: 'Organizimi i kantierit dhe mobilizimi',
+      paragraphs: [
+        `Mobilizimi i kantierit do të kryhet brenda [[${mob}]] nga nënshkrimi i kontratës. Në këtë periudhë do të instalohen strukturat e përkohshme të kantierit, do të bëhet sinjalistika e sigurisë dhe do të pozicionohet makineria kryesore.`,
+        `Kantieri do të menaxhohet nga një Drejtues Teknik me licencë profesionale në fushën përkatëse. Struktura organizative përfshin [[${i.staff}]] anëtarë stafi të deklaruar dhe [[${i.machinery}]] makineri operative.`,
+      ],
+    },
+    {
+      title: 'Afati dhe grafiku i punimeve',
+      paragraphs: [
+        `Afati total i realizimit të objektit është [[${afati}]]. Punimet do të zhvillohen sipas një grafiku me milestones të qarta, në koordinim me mbikëqyrësin e caktuar nga autoriteti.`,
+        `Për pjesët kritike të punimeve (punime germimi, betoni strukturor, shtresat asfaltike) është parashikuar buffer kohor 10% për të mbuluar kushte të pafavorshme atmosferike ose ndërhyrje të paplanifikuara.`,
+      ],
+    },
+    {
+      title: 'Burimet materiale dhe njerëzore',
+      paragraphs: [
+        `Preventivi përfshin [[${i.preventivi}]] zëra të plotësuar me çmime nga manuali zyrtar 2023. Materialet do të sigurohen nga furnizues të sertifikuar, me certifikatë konformiteti për çdo lot.`,
+        `Stafi operativ në kantier është i pajisur me dokumentacionin e plotë të licencave, diplomave dhe kontratave aktive. Makineria është me mirëmbajtje të rregullt dhe me dokumente të regjistrimit.`,
+      ],
+    },
+    {
+      title: 'Kontrolli i cilësisë dhe siguria',
+      paragraphs: [
+        `Kontrolli i cilësisë zbatohet në tre nivele: (a) vetëkontroll nga brigadieri i punimeve, (b) kontroll periodik nga inxhinieri rezident, (c) kontroll i pavarur nga laboratori i akredituar për materialet kryesore (beton, asfalt, hekur).`,
+        `Siguria në punë mbahet sipas standardit OHSAS 18001 / ISO 45001. Çdo punonjës plotësohet me DPI (kaskë, vesha, maska, rripa sigurie) dhe kalon trajnim hyrës para se të hyjë në kantier.`,
+      ],
+    },
+    {
+      title: 'Garancia dhe dorëzimi',
+      paragraphs: [
+        `Pas përfundimit të punimeve, objekti i dorëzohet autoritetit në prani të mbikëqyrësit të kontratës. Defektet eventuale mbulohen nga garancia e punimeve prej [[${gar}]] nga data e marrjes në dorëzim.`,
+        `Gjatë periudhës së garancisë, kompania angazhohet të ndërhyjë brenda 72 orëve nga njoftimi me shkrim për çdo defekt strukturor ose funksional të raportuar.`,
+      ],
+    },
+    {
+      title: 'Përmbyllje',
+      paragraphs: [
+        `Me këtë metodologji, Kompania Ime SH.P.K. garanton një realizim profesional, brenda afatit dhe brenda buxhetit të parashikuar, në përputhje të plotë me kushtet e kontratës dhe standardet teknike në fuqi.`,
+      ],
+    },
+  ];
+}
+
 function PreventiviUpload({ form, setForm }) {
   const file = form.preventivi?.file || null;
+  const rows = form.preventivi?.rows || [];
   const inputRef = React.useRef(null);
-  const setFile = (f) => setForm((prev) => ({ ...prev, preventivi: { ...(prev.preventivi || {}), file: f } }));
+  const { data: manualData, error: manualErr } = useManualData();
+
+  const setPrev = (patch) =>
+    setForm((prev) => ({ ...prev, preventivi: { ...(prev.preventivi || {}), ...patch } }));
+
+  // First upload — parse sample + auto-match once manual data is ready.
+  const loadSample = React.useCallback((descriptor) => {
+    fetch('preventivi-sample.json')
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then((sample) => {
+        const flat = flattenPreventivi(sample);
+        setPrev({ file: descriptor, rows: flat, autoFilledAt: null, sample });
+      })
+      .catch(() => { setPrev({ file: descriptor }); });
+  }, []); // eslint-disable-line
+
+  // Once we have both rows + manualData, run auto-match if rows are un-priced.
+  React.useEffect(() => {
+    if (!manualData || !rows.length) return;
+    const needsMatch = rows.some((r) => r.type === 'row' && r.match == null);
+    if (!needsMatch) return;
+    const matched = autoMatchAll(rows, manualData);
+    setPrev({ rows: matched, autoFilledAt: Date.now() });
+  }, [manualData, rows.length]); // eslint-disable-line
 
   const onPick = (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
-    // We store just a lightweight descriptor — the prototype doesn't upload.
-    setFile({ name: f.name, size: f.size });
+    loadSample({ name: f.name, size: f.size });
     e.target.value = '';
   };
 
+  const onReset = () => setPrev({ file: null, rows: [], autoFilledAt: null });
+
+  // Editor mode — rows are loaded
+  if (file && rows.length) {
+    return (
+      <>
+        <div className="k-prev-strip">
+          <div className="k-prev-strip-file">
+            <span className="material-icons">description</span>
+            <div>
+              <div className="k-prev-strip-name">{file.name}</div>
+              <div className="k-prev-strip-meta">
+                {file.size ? `${Math.max(1, Math.round(file.size / 1024))} KB · ` : ''}
+                {rows.filter((r) => r.type === 'row').length} zëra u njohën automatikisht
+              </div>
+            </div>
+          </div>
+          <div className="k-prev-strip-actions">
+            <button type="button" className="k-prev-file-btn"
+                    onClick={() => inputRef.current && inputRef.current.click()}>
+              <span className="material-icons">autorenew</span>
+              Zëvendëso
+            </button>
+            <button type="button" className="k-prev-file-btn is-danger" onClick={onReset}>
+              <span className="material-icons">delete</span>
+              Hiq
+            </button>
+          </div>
+          <input ref={inputRef} type="file" accept=".xlsx,.xls,.pdf"
+                 style={{ display: 'none' }} onChange={onPick} />
+        </div>
+
+        <PreventiviEditor
+          rows={rows}
+          manualData={manualData}
+          manualErr={manualErr}
+          onChange={(nextRows) => setPrev({ rows: nextRows })}
+        />
+      </>
+    );
+  }
+
+  // Empty state — dropzone
   return (
     <div className="k-prev">
       <header className="k-prev-head">
@@ -1206,53 +2653,23 @@ function PreventiviUpload({ form, setForm }) {
           <div className="k-prev-eyebrow">Ngarkim nga ju</div>
           <h3>Preventivi bosh — pa çmime</h3>
           <p>
-            Ngarko preventivin bosh të autoritetit kontraktor (pa çmime njësie). Sistemi e kombinon
-            me manualin zyrtar për t'ju ndihmuar të plotësoni ofertën.
+            Ngarko preventivin bosh të autoritetit kontraktor (pa çmime njësie). Sistemi e lexon,
+            njeh kodet dhe mbush automatikisht çmimet nga manuali zyrtar.
           </p>
         </div>
       </header>
 
-      {!file ? (
-        <button
-          type="button"
-          className="k-prev-drop"
-          onClick={() => inputRef.current && inputRef.current.click()}>
-          <span className="material-icons">cloud_upload</span>
-          <div>
-            <div className="k-prev-drop-title">Ngarko preventivin bosh</div>
-            <div className="k-prev-drop-hint">Excel (.xlsx / .xls) ose PDF · deri 20 MB</div>
-          </div>
-          <span className="k-prev-drop-cta">Zgjidh skedarin</span>
-        </button>
-      ) : (
-        <div className="k-prev-file">
-          <div className="k-prev-file-icon">
-            <span className="material-icons">description</span>
-          </div>
-          <div className="k-prev-file-main">
-            <div className="k-prev-file-name">{file.name}</div>
-            <div className="k-prev-file-meta">
-              {file.size ? `${Math.max(1, Math.round(file.size / 1024))} KB · ` : ''}I ngarkuar sapo
-            </div>
-          </div>
-          <div className="k-prev-file-actions">
-            <button
-              type="button"
-              className="k-prev-file-btn"
-              onClick={() => inputRef.current && inputRef.current.click()}>
-              <span className="material-icons">autorenew</span>
-              Zëvendëso
-            </button>
-            <button
-              type="button"
-              className="k-prev-file-btn is-danger"
-              onClick={() => setFile(null)}>
-              <span className="material-icons">delete</span>
-              Hiq
-            </button>
-          </div>
+      <button
+        type="button"
+        className="k-prev-drop"
+        onClick={() => inputRef.current && inputRef.current.click()}>
+        <span className="material-icons">cloud_upload</span>
+        <div>
+          <div className="k-prev-drop-title">Ngarko preventivin bosh</div>
+          <div className="k-prev-drop-hint">Excel (.xlsx / .xls) ose PDF · deri 20 MB</div>
         </div>
-      )}
+        <span className="k-prev-drop-cta">Zgjidh skedarin</span>
+      </button>
 
       <input
         ref={inputRef}
@@ -1263,11 +2680,383 @@ function PreventiviUpload({ form, setForm }) {
       />
 
       <ul className="k-prev-tips">
-        <li><span className="material-icons">check_circle</span> Mos fshij kolonat e sasisë dhe të njësisë.</li>
-        <li><span className="material-icons">check_circle</span> Ruaj të njëjtin rend të zërave si në dokumentin origjinal.</li>
-        <li><span className="material-icons">check_circle</span> Sistemi do t'ju propozojë çmime nga manuali zyrtar pas ngarkimit.</li>
+        <li><span className="material-icons">bolt</span> Sistemi mbush automatikisht çmimet për kodet që njeh nga manuali.</li>
+        <li><span className="material-icons">edit_note</span> Ju mund ta mbishkruani çdo çmim sipas ofertës suaj.</li>
+        <li><span className="material-icons">verified</span> Totali dhe TVSH llogariten dhe ripërtërihen automatikisht.</li>
       </ul>
     </div>
+  );
+}
+
+// ---------- Preventivi editor ----------
+function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
+  const [activeId, setActiveId] = React.useState(null);
+  const [filter, setFilter]     = React.useState('all'); // all | auto | manual | none
+  const [coef, setCoef]         = React.useState(100);   // % e çmimeve të manualit (100 = çmim i plotë)
+  const [infoOpen, setInfoOpen] = React.useState(true);
+
+  const dataRows = React.useMemo(() => rows.filter((r) => r.type === 'row'), [rows]);
+  const sectionRows = React.useMemo(() => rows.filter((r) => r.type === 'section'), [rows]);
+
+  // Stats
+  const stats = React.useMemo(() => {
+    const s = { auto: 0, manual: 0, none: 0, total: dataRows.length };
+    for (const r of dataRows) {
+      if (r.match === 'auto' || r.match === 'chosen') s.auto += 1;
+      else if (r.match === 'manual') s.manual += 1;
+      else s.none += 1;
+    }
+    return s;
+  }, [dataRows]);
+
+  // Per-section subtotals
+  const sectionSums = React.useMemo(() => {
+    const sums = {};
+    for (const r of dataRows) {
+      if (!r.vlefta) continue;
+      sums[r.sectionId] = (sums[r.sectionId] || 0) + Number(r.vlefta);
+    }
+    return sums;
+  }, [dataRows]);
+
+  const grandManual = React.useMemo(() => {
+    let g = 0;
+    for (const r of dataRows) if (r.vlefta) g += Number(r.vlefta);
+    return g;
+  }, [dataRows]);
+
+  const factor = coef / 100;
+  const grand  = +(grandManual * factor).toFixed(2);
+  const tvsh   = +(grand * 0.20).toFixed(2);
+  const totali = +(grand + tvsh).toFixed(2);
+
+  const updateRow = (id, patch) => {
+    onChange(rows.map((r) => r.id === id ? { ...r, ...patch } : r));
+  };
+
+  const handlePriceChange = (row, nextCmimi) => {
+    const cmimi = nextCmimi === '' || nextCmimi == null ? null : Number(nextCmimi);
+    const vlefta = cmimi == null ? null : +(cmimi * row.sasia).toFixed(2);
+    updateRow(row.id, { cmimi, vlefta, match: cmimi == null ? 'none' : 'manual' });
+  };
+
+  const handleSyncRow = (row) => {
+    if (!row.source) return;
+    updateRow(row.id, {
+      cmimi: row.source.totali,
+      vlefta: +(row.source.totali * row.sasia).toFixed(2),
+      match: 'auto',
+    });
+  };
+
+  const handleChooseCandidate = (row, candidate) => {
+    updateRow(row.id, {
+      cmimi: candidate.totali,
+      vlefta: +(candidate.totali * row.sasia).toFixed(2),
+      match: 'chosen',
+      source: candidate,
+    });
+  };
+
+  const fillAll = () => {
+    if (!manualData) return;
+    onChange(autoMatchAll(rows, manualData));
+  };
+
+  const activeRow = React.useMemo(() =>
+    activeId ? dataRows.find((r) => r.id === activeId) : null,
+  [activeId, dataRows]);
+
+  const passesFilter = (r) => {
+    if (filter === 'all') return true;
+    if (filter === 'auto') return r.match === 'auto' || r.match === 'chosen';
+    if (filter === 'manual') return r.match === 'manual';
+    if (filter === 'none') return r.match === 'none' || r.match == null;
+    return true;
+  };
+
+  const visibleRows = React.useMemo(() => {
+    // Build visible stream: each section is kept only if at least one of its
+    // rows passes the current filter.
+    const bySection = new Map();
+    for (const r of dataRows) {
+      if (!passesFilter(r)) continue;
+      if (!bySection.has(r.sectionId)) bySection.set(r.sectionId, []);
+      bySection.get(r.sectionId).push(r);
+    }
+    const out = [];
+    for (const s of sectionRows) {
+      const kids = bySection.get(s.id);
+      if (!kids || !kids.length) continue;
+      out.push(s);
+      for (const k of kids) out.push(k);
+    }
+    return out;
+  }, [dataRows, sectionRows, filter]); // eslint-disable-line
+
+  return (
+    <div className={'k-pe' + (activeRow ? ' has-inspector' : '')}>
+      <header className="k-pe-head">
+        <div className="k-pe-totals">
+          <div><span>Shuma analiza</span><strong>{formatCurrency(grand)} ALL</strong></div>
+          <div><span>TVSH (20%)</span><strong>{formatCurrency(tvsh)} ALL</strong></div>
+          <div className="is-total"><span>Totali</span><strong>{formatCurrency(totali)} ALL</strong></div>
+        </div>
+        <div className="k-pe-actions">
+          <button type="button" className="k-pe-filter-group" role="tablist">
+            {[
+              { id: 'all',    label: 'Të gjitha', n: stats.total },
+              { id: 'none',   label: 'Pa match',  n: stats.none },
+              { id: 'manual', label: 'Manual',    n: stats.manual },
+              { id: 'auto',   label: 'Auto',      n: stats.auto },
+            ].map((f) => (
+              <span
+                key={f.id}
+                className={'k-pe-filter' + (filter === f.id ? ' is-on' : '')}
+                onClick={() => setFilter(f.id)}>
+                {f.label} <b>{f.n}</b>
+              </span>
+            ))}
+          </button>
+        </div>
+      </header>
+
+      {manualErr && (
+        <div className="k-man-empty">
+          <span className="material-icons">error_outline</span>
+          <div>
+            <strong>S'u ngarkua manuali për auto-match.</strong>
+            <p>{manualErr}</p>
+          </div>
+        </div>
+      )}
+
+      {infoOpen && (
+        <div className="k-pe-info">
+          <span className="material-icons k-pe-info-ico">info</span>
+          <div className="k-pe-info-body">
+            <strong>Çmimet zyrtare vs. oferta juaj</strong>
+            <p>
+              Totali i mësipërm llogaritet me <b>çmimet e plota të manualit 2023</b>. Rregullo
+              koeficientin më poshtë, ose mbishkruaj çmime rresht-për-rresht.
+            </p>
+            <div className="k-pe-coef">
+              <label htmlFor="k-pe-coef">Koeficienti i ofertës</label>
+              <input id="k-pe-coef" type="range" min="70" max="110" step="1"
+                     value={coef} onChange={(e) => setCoef(Number(e.target.value))} />
+              <span className="k-pe-coef-val">{coef}%</span>
+              <button type="button" className="k-pe-coef-reset"
+                      onClick={() => setCoef(100)} disabled={coef === 100}>
+                Rivendos
+              </button>
+            </div>
+            <p className="k-pe-info-note">
+              Me koef. <b>{coef}%</b>: Shuma pa TVSH <b>{formatCurrency(grand)} ALL</b> ·
+              TVSH <b>{formatCurrency(tvsh)} ALL</b> ·
+              Totali <b>{formatCurrency(totali)} ALL</b>
+              {coef !== 100 && (
+                <> · <span className="k-pe-diff">Ulje prej {formatCurrency(grandManual - grand)} ALL nga çmimi i plotë</span></>
+              )}
+            </p>
+          </div>
+          <button type="button" className="k-pe-info-close"
+                  onClick={() => setInfoOpen(false)} aria-label="Mbyll">
+            <span className="material-icons">close</span>
+          </button>
+        </div>
+      )}
+
+      <div className="k-pe-main">
+        <div className="k-pe-table-wrap">
+          <table className="k-man-table k-pe-table">
+            <thead>
+              <tr>
+                <th style={{ width: 36 }}>#</th>
+                <th style={{ width: 80 }}>Kodi</th>
+                <th>Emërtimi</th>
+                <th style={{ width: 50 }}>Njësia</th>
+                <th className="is-num" style={{ width: 90 }}>Sasia</th>
+                <th className="is-num" style={{ width: 120 }}>Çmimi</th>
+                <th className="is-num is-total" style={{ width: 140 }}>Vlefta</th>
+                <th style={{ width: 110 }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRows.map((r) => {
+                if (r.type === 'section') {
+                  const sum = (sectionSums[r.id] || 0) * factor;
+                  return (
+                    <tr key={r.id} className="k-pe-section-row">
+                      <td colSpan={6}>
+                        <span className="k-pe-section-nr">{r.nr}.</span>
+                        {r.title}
+                      </td>
+                      <td className="is-num is-total">{formatCurrency(sum)}</td>
+                      <td />
+                    </tr>
+                  );
+                }
+                const isActive = activeId === r.id;
+                const pill =
+                  r.match === 'auto'   ? { cls: 'is-ok',     icon: 'check_circle', label: 'Auto' } :
+                  r.match === 'chosen' ? { cls: 'is-ok',     icon: 'check_circle', label: 'Zgjedhur' } :
+                  r.match === 'manual' ? { cls: 'is-indigo', icon: 'edit',         label: 'Manual' } :
+                                         { cls: 'is-warn',   icon: 'warning',      label: 'Pa match' };
+                return (
+                  <tr key={r.id}
+                      className={'k-pe-data-row' + (isActive ? ' is-active' : '')}
+                      onClick={() => setActiveId(isActive ? null : r.id)}>
+                    <td className="k-pe-td-nr">{r.nr}</td>
+                    <td className="k-man-td-code">{r.kodi}</td>
+                    <td className="k-pe-td-name">{r.emertimi}</td>
+                    <td className="k-man-td-unit">{r.njesia}</td>
+                    <td className="is-num">{formatCurrency(r.sasia)}</td>
+                    <td className="is-num" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        className="k-pe-price-input"
+                        type="number"
+                        step="0.01"
+                        value={r.cmimi == null ? '' : r.cmimi}
+                        placeholder="—"
+                        onChange={(e) => handlePriceChange(r, e.target.value)}
+                      />
+                    </td>
+                    <td className="is-num is-total">{formatCurrency(r.vlefta)}</td>
+                    <td>
+                      <span className={'d-pill ' + pill.cls}>
+                        <span className="material-icons">{pill.icon}</span>
+                        {pill.label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {activeRow && (
+          <PreventiviInspector
+            row={activeRow}
+            onClose={() => setActiveId(null)}
+            onSync={() => handleSyncRow(activeRow)}
+            onChoose={(c) => handleChooseCandidate(activeRow, c)}
+            onPriceChange={(v) => handlePriceChange(activeRow, v)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value, tone }) {
+  return (
+    <div className={'k-pe-stat' + (tone ? ' is-' + tone : '')}>
+      <div className="k-pe-stat-val">{value}</div>
+      <div className="k-pe-stat-lbl">{label}</div>
+    </div>
+  );
+}
+
+function PreventiviInspector({ row, onClose, onSync, onChoose, onPriceChange }) {
+  const hasSource = !!row.source;
+  return (
+    <aside className="k-pe-inspector">
+      <header className="k-pe-insp-head">
+        <div>
+          <div className="k-pe-insp-eyebrow">Inspektor i zërit</div>
+          <div className="k-pe-insp-kodi">{row.kodi}</div>
+        </div>
+        <button type="button" className="k-pe-insp-close" onClick={onClose}
+                aria-label="Mbyll">
+          <span className="material-icons">close</span>
+        </button>
+      </header>
+
+      <p className="k-pe-insp-name">{row.emertimi}</p>
+
+      <div className="k-pe-insp-current">
+        <div>
+          <span className="k-pe-insp-k">Sasia</span>
+          <strong>{formatCurrency(row.sasia)} {row.njesia}</strong>
+        </div>
+        <div>
+          <span className="k-pe-insp-k">Çmimi</span>
+          <input
+            className="k-pe-insp-price"
+            type="number"
+            step="0.01"
+            value={row.cmimi == null ? '' : row.cmimi}
+            placeholder="—"
+            onChange={(e) => onPriceChange(e.target.value)}
+          />
+        </div>
+        <div className="is-total">
+          <span className="k-pe-insp-k">Vlefta</span>
+          <strong>{formatCurrency(row.vlefta)} ALL</strong>
+        </div>
+      </div>
+
+      {hasSource ? (
+        <div className="k-pe-insp-source">
+          <div className="k-pe-insp-src-head">
+            <span className="material-icons">menu_book</span>
+            <div>
+              <div className="k-pe-insp-src-title">Referencë nga manuali</div>
+              <div className="k-pe-insp-src-meta">
+                {row.source.manuali} · {row.source.kategoria}
+              </div>
+            </div>
+          </div>
+          <ul className="k-pe-insp-breakdown">
+            <li><span>Puntori</span>    <b>{formatCurrency(row.source.puntori)}</b></li>
+            <li><span>Transporti</span> <b>{formatCurrency(row.source.transporti)}</b></li>
+            <li><span>Makineri</span>   <b>{formatCurrency(row.source.makineri)}</b></li>
+            <li><span>Materiale</span>  <b>{formatCurrency(row.source.materiale)}</b></li>
+            <li><span>Shpenzime</span>  <b>{formatCurrency(row.source.shpenzime)}</b></li>
+            <li><span>Fitimi</span>     <b>{formatCurrency(row.source.fitimi)}</b></li>
+            <li className="is-total">
+              <span>Totali manual</span>
+              <b>{formatCurrency(row.source.totali)} ALL</b>
+            </li>
+          </ul>
+          {row.match === 'manual' && (
+            <button type="button" className="k-pe-insp-sync" onClick={onSync}>
+              <span className="material-icons">sync</span>
+              Sinkronizo me çmimin e manualit
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="k-pe-insp-none">
+          <div className="k-pe-insp-none-head">
+            <span className="material-icons">search</span>
+            <strong>Nuk u gjet direkt në manual</strong>
+          </div>
+          {row.candidates && row.candidates.length > 0 ? (
+            <>
+              <p>Kandidatë të propozuar:</p>
+              <ul className="k-pe-insp-cands">
+                {row.candidates.map((c, i) => (
+                  <li key={c.kodi + '-' + i}>
+                    <div className="k-pe-cand-main">
+                      <span className="k-man-td-code">{c.kodi}</span>
+                      <span className="k-pe-cand-name">{c.emertimi}</span>
+                      <span className="k-pe-cand-meta">{c.njesia} · {formatCurrency(c.totali)} ALL</span>
+                    </div>
+                    <button type="button" className="k-pe-cand-use" onClick={() => onChoose(c)}>
+                      Zgjidh
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p>Nuk ka kandidatë të ngjashëm. Shkruaj një çmim manualisht.</p>
+          )}
+        </div>
+      )}
+    </aside>
   );
 }
 
@@ -1393,14 +3182,16 @@ function KrijoStep2({ selected, setSelected, preview, setPreview, form, setForm,
         <div className="k-doc-preview-head">
           <span className="k-doc-preview-eyebrow">Pamja paraprake</span>
           <h3>{current.name}</h3>
-          <div className="k-doc-preview-actions">
-            <button className="k-doc-preview-btn" title="Shkarko">
-              <span className="material-icons">download</span>
-            </button>
-            <button className="k-doc-preview-btn" title="Printo">
-              <span className="material-icons">print</span>
-            </button>
-          </div>
+          {current.id !== 'manuali-cmimeve' && current.id !== 'preventivi-bosh' && (
+            <div className="k-doc-preview-actions">
+              <button className="k-doc-preview-btn" title="Shkarko">
+                <span className="material-icons">download</span>
+              </button>
+              <button className="k-doc-preview-btn" title="Printo">
+                <span className="material-icons">print</span>
+              </button>
+            </div>
+          )}
         </div>
         <div className={'k-doc-preview-body' + (current.id === 'vete-deklarim' ? ' is-vd' : '') + ((current.id === 'manuali-cmimeve' || current.id === 'preventivi-bosh') ? ' is-prev' : '')}>
           {current.id === 'vete-deklarim' ? (
@@ -1409,6 +3200,8 @@ function KrijoStep2({ selected, setSelected, preview, setPreview, form, setForm,
             <ManualiCmimeveViewer year={current.year || 2026} />
           ) : current.id === 'preventivi-bosh' ? (
             <PreventiviUpload form={form} setForm={setForm} />
+          ) : current.id === 'metodologjia' ? (
+            <MetodologjiaGenerator form={form} setForm={setForm} selectedDocs={selected} />
           ) : (
             <div className="k-doc-paper">
               <div className="k-doc-paper-stamp">
@@ -1498,17 +3291,36 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
       machinery: [],   // [{ name, plate }]
       certificates: [],// [{ name, issuer }]
       licenses: [],    // [{ name, issuer }]
-      emailStatus: null, // null | 'sent'
+      similarWorks: [],      // Punë të ngjashme — multi, uses `work` drawer kind
+      listpagesa: null,      // Listëpagesa — 1 doc { name, size }
+      xhiro: null,           // Xhiro vjetore — 1 doc { name, size }
+      emailStatus: null,     // null | 'sent' — email kërkese u dërgua
+      emailVerified: false,  // Email kontakti u konfirmua nga kompania mbështetëse
+      emailVerifySent: false,// Kodi i verifikimit u dërgua në email
+      mode: 'direct',        // 'direct' — ky user i fut te dhenat | 'link' — partneri i fut vete
+      linkSent: false,       // Linku i ftesës u dërgua te partneri
+      shareLink: '',         // mock URL
     },
     consortium: {
+      mode: 'manual',       // 'manual' — fill each partner's data yourself | 'link' — partners fill it via link
+      linkSentAll: false,   // bulk link dispatch state
       partners: [
         // First partner is always the logged-in company — locked name/NIPT, editable %.
-        { id: 'self', name: 'Albkons SH.P.K.', nipt: 'L01234567A', percent: '', isSelf: true },
+        {
+          id: 'self',
+          name: 'Albkons SH.P.K.',
+          nipt: 'L01234567A',
+          percent: '',
+          email: '',
+          isSelf: true,
+          linkSent: false,
+          shareLink: '',
+          capacities: {
+            staff: [], machinery: [], certificates: [], licenses: [],
+            similarWorks: [], listpagesa: null, xhiro: null,
+          },
+        },
       ],
-      staff: [],
-      machinery: [],
-      certificates: [],
-      licenses: [],
     },
     veteDeklarim: {
       // Ids of entries included in the self-declaration, keyed by resource kind.
@@ -1523,6 +3335,13 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
       // doesn't actually upload a file.
       file: null, // { name, size }
     },
+    metodologjia: {
+      mobilizimi:    { kohe: '', njesia: 'dite' },
+      afatiPunimeve: { kohe: '', njesia: 'dite', sameAsStep1: true },
+      garancia:      { periudha: '', njesiaPer: 'muaj', termat: '' },
+      docsExtra:     [], // [{ id, name, size }]
+      generated:     null,
+    },
   });
   const [selectedDocs, setSelectedDocs] = React.useState([
     'vete-deklarim', 'konflikt', 'kriteret', 'pavarur', 'xhiro',
@@ -1532,7 +3351,7 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
   const setSupport = (k) => (v) => setForm((f) => ({ ...f, support: { ...f.support, [k]: v } }));
   const setConsortium = (k) => (v) => setForm((f) => ({ ...f, consortium: { ...f.consortium, [k]: v } }));
 
-  const LAST_STEP = 6;
+  const LAST_STEP = 7;
   const goNext = () => {
     if (step < LAST_STEP) setStep(step + 1);
     else onNext && onNext();
@@ -1548,13 +3367,14 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
     { h1: 'Dokumentacioni Financiar',  sub: 'Zgjidh dokumentet financiare që dëshmojnë kapacitetin e kompanisë.' },
     { h1: 'Dokumentacioni Teknik',     sub: 'Zgjidh dokumentet teknike që lidhen me realizimin e objektit të kontratës.' },
     { h1: 'Preventivi',                sub: 'Ngarko preventivin me çmime njësie dhe vlera totale për zërat e kontratës.' },
+    { h1: 'Deklarimet për metodologjinë', sub: 'Mobilizimi, afati, garancia dhe dokumente shtesë që ushqejnë gjenerimin e metodologjisë.' },
     { h1: 'Metodologjia',              sub: 'Përshkrimi i metodologjisë së realizimit — mënyra, afatet dhe organizimi.' },
     { h1: 'Rishiko & Krijo',           sub: 'Kontrollo të dhënat e dosjes para se të konfirmosh krijimin.' },
   ];
   const t = titles[step];
 
   // Map step index → which document category this step scopes to.
-  const STEP_CATEGORY = { 1: 'ligjor', 2: 'financiar', 3: 'teknik', 4: 'preventivi', 5: 'metodologjia' };
+  const STEP_CATEGORY = { 1: 'ligjor', 2: 'financiar', 3: 'teknik', 4: 'preventivi', 6: 'metodologjia' };
 
   return (
     <>
@@ -1587,6 +3407,7 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
             setForm={setForm}
           />
         )}
+        {step === 5 && <DeklarimetStep form={form} setForm={setForm} />}
         {step === LAST_STEP && <KrijoStep3 form={form} selectedDocs={selectedDocs} />}
 
         <div className="k-footer">

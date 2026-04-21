@@ -140,18 +140,42 @@
 }
 .fl-rail-step {
   position: relative;
+  padding: 0;
+  list-style: none;
+}
+.fl-rail-btn {
+  width: 100%;
   display: grid;
   grid-template-columns: 32px 1fr;
   gap: 12px;
-  padding: 10px 0;
+  padding: 10px 10px 10px 6px;
+  margin: 0;
   align-items: flex-start;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--t-dur-1) var(--t-ease);
+}
+.fl-rail-btn:hover {
+  background: color-mix(in oklab, var(--t-brand) 6%, transparent);
+}
+.fl-rail-btn:focus-visible {
+  outline: 2px solid var(--t-brand);
+  outline-offset: 2px;
+}
+.fl-rail-active .fl-rail-btn {
+  background: color-mix(in oklab, var(--t-brand) 8%, transparent);
 }
 /* connector line between nodes */
 .fl-rail-step:not(:last-child)::before {
   content: "";
   position: absolute;
-  left: 15px;
-  top: 40px;
+  left: 21px;
+  top: 46px;
   bottom: -2px;
   width: 2px;
   background: #E2E8F0;

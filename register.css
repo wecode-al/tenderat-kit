@@ -56,3 +56,59 @@
   margin-top: 2px;
   flex: none;
 }
+
+/* ---------- Email confirmation (shared by Register + Login) ---------- */
+
+.rg-code {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 4px 0 12px;
+}
+.rg-code-cell {
+  width: 48px;
+  height: 56px;
+  border-radius: 12px;
+  border: 1.5px solid var(--t-border-300, #D1D5DB);
+  background: var(--t-white);
+  text-align: center;
+  font: 700 22px/1 var(--t-font-ui);
+  color: var(--t-ink-900);
+  caret-color: var(--t-brand);
+  transition: border-color var(--t-dur-1) var(--t-ease),
+              box-shadow   var(--t-dur-1) var(--t-ease),
+              background   var(--t-dur-1) var(--t-ease);
+}
+.rg-code-cell:focus {
+  outline: none;
+  border-color: var(--t-brand);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--t-brand) 18%, transparent);
+}
+.rg-code-cell.is-filled {
+  background: color-mix(in oklab, var(--t-brand) 6%, white);
+  border-color: var(--t-brand);
+}
+
+.rg-confirm-foot {
+  text-align: center;
+  font: 13px/1.4 var(--t-font-ui);
+  color: var(--t-fg-2);
+  margin-top: 4px;
+}
+.rg-confirm-foot .t-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--t-brand);
+  font-weight: 600;
+  cursor: pointer;
+}
+.rg-resent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #16A34A;
+  font-weight: 600;
+}
+.rg-resent .material-icons { font-size: 16px; }

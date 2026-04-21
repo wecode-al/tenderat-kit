@@ -3,12 +3,13 @@
 function DossierCard({
   title, authority, reference, statusKey = 'prep', statusLabel,
   fondi, closingDate, daysLeft, docsDone = 0, docsTotal = 0,
+  createdAt,
   onOpen, onEdit, onDelete,
 }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [confirming, setConfirming] = React.useState(false);
   const menuRef = React.useRef(null);
-  const urgent = typeof daysLeft === 'number' && daysLeft <= 5 && statusKey !== 'closed';
+  const urgent = false;
 
   React.useEffect(() => {
     if (!menuOpen) return;
@@ -31,6 +32,12 @@ function DossierCard({
       <div className="t-dc-accent" aria-hidden />
 
       <div className="t-dc-top">
+        {statusLabel && (
+          <span className={'t-dc-pill is-' + statusKey}>
+            <span className="t-dc-dot" />
+            {statusLabel}
+          </span>
+        )}
         <div className="t-dc-kebab-wrap" ref={menuRef}>
           <button
             className="t-dc-kebab"
@@ -80,10 +87,10 @@ function DossierCard({
 
       <div className="t-dc-foot">
         <span className="t-dc-ref">{reference}</span>
-        {typeof daysLeft === 'number' && (
-          <span className={'t-dc-countdown' + (urgent ? ' is-urgent' : '')}>
-            <span className="material-icons">schedule</span>
-            {daysLeft <= 0 ? 'Mbyllur' : daysLeft + ' ditë'}
+        {createdAt && (
+          <span className="t-dc-countdown">
+            <span className="material-icons">event</span>
+            Krijuar {createdAt}
           </span>
         )}
       </div>

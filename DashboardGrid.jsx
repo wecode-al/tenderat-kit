@@ -3,52 +3,53 @@
 
 const SAMPLE_DOSSIERS = [
   {
-    id: 'd1', title: 'Ndërtimi i rrugës rurale — Loti 4',
-    authority: 'Bashkia Tiranë', reference: 'REF-2026-0118',
-    statusKey: 'review', statusLabel: 'Për rishikim',
-    fondi: '82 400 000 ALL', closingDate: '22/04/2026', daysLeft: 4,
-    docsDone: 14, docsTotal: 15,
-  },
-  {
-    id: 'd2', title: 'Furnizim pajisje ZK',
-    authority: 'Spitali Rajonal Durrës', reference: 'REF-2026-0471',
-    statusKey: 'prep', statusLabel: 'Në përgatitje',
-    fondi: '12 400 000 ALL', closingDate: '30/06/2026', daysLeft: 73,
-    docsDone: 6, docsTotal: 8,
-  },
-  {
-    id: 'd3', title: 'Mirëmbajtje ambienti dhe gjelbërim',
-    authority: 'Bashkia Vlorë', reference: 'REF-2026-0392',
-    statusKey: 'submitted', statusLabel: 'Dorëzuar',
-    fondi: '4 800 000 ALL', closingDate: '02/03/2026', daysLeft: 0,
-    docsDone: 22, docsTotal: 22,
-  },
-  {
-    id: 'd4', title: 'Shërbime konsulence strategjike 2026',
-    authority: 'Ministria e Financave', reference: 'REF-2026-0107',
-    statusKey: 'prep', statusLabel: 'Në përgatitje',
-    fondi: '3 200 000 ALL', closingDate: '28/04/2026', daysLeft: 10,
-    docsDone: 2, docsTotal: 7,
-  },
-  {
     id: 'd5', title: 'Blerje lëndë djegëse për flotën',
     authority: 'ARRSH', reference: 'REF-2026-0255',
     statusKey: 'draft', statusLabel: 'Draft',
     fondi: '18 750 000 ALL', closingDate: '15/05/2026', daysLeft: 27,
-    docsDone: 1, docsTotal: 12,
+    docsDone: 1, docsTotal: 12, createdAt: '18/04/2026',
+  },
+  {
+    id: 'd1', title: 'Ndërtimi i rrugës rurale — Loti 4',
+    authority: 'Bashkia Tiranë', reference: 'REF-2026-0118',
+    statusKey: 'submitted', statusLabel: 'Dorëzuar',
+    fondi: '82 400 000 ALL', closingDate: '22/04/2026', daysLeft: 4,
+    docsDone: 14, docsTotal: 15, createdAt: '02/04/2026',
+  },
+  {
+    id: 'd4', title: 'Shërbime konsulence strategjike 2026',
+    authority: 'Ministria e Financave', reference: 'REF-2026-0107',
+    statusKey: 'submitted', statusLabel: 'Dorëzuar',
+    fondi: '3 200 000 ALL', closingDate: '28/04/2026', daysLeft: 10,
+    docsDone: 2, docsTotal: 7, createdAt: '08/04/2026',
+  },
+  {
+    id: 'd2', title: 'Furnizim pajisje ZK',
+    authority: 'Spitali Rajonal Durrës', reference: 'REF-2026-0471',
+    statusKey: 'submitted', statusLabel: 'Dorëzuar',
+    fondi: '12 400 000 ALL', closingDate: '30/06/2026', daysLeft: 73,
+    docsDone: 6, docsTotal: 8, createdAt: '15/04/2026',
+  },
+  {
+    id: 'd3', title: 'Mirëmbajtje ambienti dhe gjelbërim',
+    authority: 'Bashkia Vlorë', reference: 'REF-2026-0392',
+    statusKey: 'closed', statusLabel: 'Mbyllur',
+    fondi: '4 800 000 ALL', closingDate: '02/03/2026', daysLeft: 0,
+    docsDone: 22, docsTotal: 22, createdAt: '10/02/2026',
   },
   {
     id: 'd6', title: 'Rikonstruksion çerdhe nr. 12',
     authority: 'Bashkia Tiranë', reference: 'REF-2026-0088',
     statusKey: 'closed', statusLabel: 'Mbyllur',
     fondi: '24 100 000 ALL', closingDate: '12/01/2026', daysLeft: -96,
-    docsDone: 18, docsTotal: 18,
+    docsDone: 18, docsTotal: 18, createdAt: '22/12/2025',
   },
 ];
 
 const FILTERS = [
   { key: 'all',        label: 'Të gjitha' },
   { key: 'draft',      label: 'Draft' },
+  { key: 'submitted',  label: 'Dorëzuar' },
   { key: 'closed',     label: 'Mbyllur' },
 ];
 
@@ -87,11 +88,11 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
         d.reference.toLowerCase().includes(q)
       );
     }
-    const isDone = (d) => d.statusKey === 'closed' || d.statusKey === 'submitted';
+    const statusRank = { draft: 0, submitted: 1, closed: 2 };
     r = [...r].sort((a, b) => {
-      // Always push done/closed dossiers to the bottom.
-      const da = isDone(a) ? 1 : 0, db = isDone(b) ? 1 : 0;
-      if (da !== db) return da - db;
+      const ra = statusRank[a.statusKey] ?? 99;
+      const rb = statusRank[b.statusKey] ?? 99;
+      if (ra !== rb) return ra - rb;
       if (sort === 'closing') return a.daysLeft - b.daysLeft;
       if (sort === 'value')   return parseInt(b.fondi.replace(/\D/g,'')) - parseInt(a.fondi.replace(/\D/g,''));
       return 0;
@@ -109,7 +110,6 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
             <h1 className="t-page-title">Dosjet e Mia</h1>
             <p className="t-page-sub">Menaxho dokumentet e tenderave dhe dosjet e projekteve.</p>
           </div>
-          <MuiButton icon="add" onClick={onCreate}>Krijo Dosje të re</MuiButton>
         </div>
 
         {/* Toolbar */}
@@ -161,6 +161,7 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
           </div>
         ) : (
           <div className="t-dossier-grid">
+            <DossierCardEmpty onClick={onCreate} />
             {rows.map((d) => (
               <DossierCard
                 key={d.id}
@@ -174,12 +175,12 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
                 daysLeft={d.daysLeft}
                 docsDone={d.docsDone}
                 docsTotal={d.docsTotal}
+                createdAt={d.createdAt}
                 onOpen={() => onOpen && onOpen(d)}
                 onEdit={() => onOpen && onOpen(d)}
                 onDelete={() => setRemoved(prev => new Set(prev).add(d.id))}
               />
             ))}
-            <DossierCardEmpty onClick={onCreate} />
           </div>
         )}
       </div>

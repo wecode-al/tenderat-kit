@@ -13,7 +13,7 @@
   gap: 32px;
   align-items: flex-end;
   padding: 28px 32px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFFAF4 100%);
+  background: var(--t-white);
   border: 1px solid var(--t-border-card);
   border-radius: var(--t-radius-lg);
   margin-top: 8px;

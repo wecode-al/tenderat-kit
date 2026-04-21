@@ -470,6 +470,63 @@
   color: var(--t-fg-2);
 }
 
+/* ---------- Unconfirmed-email banner (Login) ---------- */
+.lg-unconfirmed {
+  width: 100%;
+  max-width: 440px;
+  background: var(--t-white);
+  border-radius: 20px;
+  padding: 32px 32px 24px;
+  box-shadow: 0 24px 48px -16px rgba(17,24,39,0.12), 0 2px 4px rgba(17,24,39,0.04);
+  border: 1px solid var(--t-border-100);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.lg-unconfirmed-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--t-brand) 8%, white);
+  border: 1px solid color-mix(in oklab, var(--t-brand) 22%, transparent);
+}
+.lg-unconfirmed-head > .material-icons {
+  color: var(--t-brand);
+  font-size: 24px;
+  flex: none;
+  margin-top: 2px;
+}
+.lg-unconfirmed-title {
+  font: 600 15px/20px var(--t-font-ui);
+  color: var(--t-ink-900);
+}
+.lg-unconfirmed-sub {
+  font: 13px/18px var(--t-font-ui);
+  color: var(--t-fg-2);
+  margin-top: 2px;
+}
+.lg-unconfirmed-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+.lg-unconfirmed-actions > button.t-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: 600 13px/1 var(--t-font-ui);
+  color: var(--t-brand);
+  cursor: pointer;
+}
+.lg-unconfirmed-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
   .lg-split, .lg-edit { grid-template-columns: 1fr; }

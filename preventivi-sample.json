@@ -1,0 +1,56 @@
+{
+  "projektues": "BASHKIA SHIJAK",
+  "objekti": "STUDIM - PROJEKTIM: \"RIKONSTRUKSIONI I RRUGES NE FSHATIN ÇIZMELI\"",
+  "rows": [
+    { "sectionNr": 1, "sectionTitle": "PUNIME GERMIMI" },
+    { "nr": 1, "kodi": "3.89/a",  "emertimi": "Germim dheu me ekskavator goma 0.25 m³, ne kanale gjeresi deri 2 m, toke zak, kategoria III, me shk ne mjet (Germim trupi rruges, skarpata, K.U.B, kanale)", "njesia": "m3", "sasia": 9000 },
+    { "nr": 2, "kodi": "2.47/an", "emertimi": "Germim shkembi mesatar me çekiç me ekskavator me zinxhir (Muret prites)", "njesia": "m3", "sasia": 1900 },
+    { "nr": 3, "kodi": "2.37/5a", "emertimi": "Transport materiale ndertimi, dheu me auto deri 5.0km",                    "njesia": "m3", "sasia": 10900 },
+
+    { "sectionNr": 2, "sectionTitle": "PUNIME SHTRESASH" },
+    { "nr": 1, "kodi": "3.164/1b", "emertimi": "Mbushje me cakell e gur gurore ne trupin e rruges, perhapur e ngjeshur me makineri (Drenazhim P.86-P.102, Rreg. Nivelete, Mbushje Tombino, Mbushje KUB, Mbushje tub300)", "njesia": "m3", "sasia": 3572 },
+    { "nr": 2, "kodi": "3.212/b",  "emertimi": "Shtrese stabilizant t=10cm (Trupi rruges, Bankina, poshte mureve prites, poshte tombinove, poshte kanalave, poshte tubave)", "njesia": "m2", "sasia": 25305 },
+    { "nr": 3, "kodi": "2.26",     "emertimi": "Shtrese çakell me makineri t=20cm, me cilindrim", "njesia": "m2", "sasia": 24665 },
+
+    { "sectionNr": 3, "sectionTitle": "ANALIZA TEKNIKE" },
+    { "nr": 1, "kodi": "3.222/2", "emertimi": "Shtrese binderi me granil gur kave, 6cm, me makineri",      "njesia": "m2", "sasia": 14380 },
+    { "nr": 2, "kodi": "3.226/1", "emertimi": "Shtrese asfaltobetoni me granil guri kave, 4cm, me makineri","njesia": "m2", "sasia": 14380 },
+
+    { "sectionNr": 4, "sectionTitle": "NDERTIMI I VEPRAVE TE ARTIT+KANALIZIME" },
+    { "nr": 1, "kodi": "3.396", "emertimi": "Mbushje me cakell pas mureve (Muret Prites)",        "njesia": "m3", "sasia": 840 },
+    { "nr": 2, "kodi": "3.367", "emertimi": "Tombino me tuba betoni Ø1000, mbi shtrese betoni",   "njesia": "ml", "sasia": 36 },
+    { "nr": 3, "kodi": "3.369", "emertimi": "Tombino me tuba betoni Ø1500, mbi shtrese betoni",   "njesia": "ml", "sasia": 11 },
+
+    { "sectionNr": 5, "sectionTitle": "PUNIME BETONI E BETONARMEJE" },
+    { "nr": 1, "kodi": "3.245", "emertimi": "Struktura monolite betoni C 25/30 (Muret prites dhe portalet e tombinove)", "njesia": "m3", "sasia": 966 },
+
+    { "sectionNr": 6, "sectionTitle": "B. SINJALET HORIZONTALE" },
+    { "nr": 1, "kodi": "3.942/3", "emertimi": "Vijezim shirita gjatesor dhe anesor me gjeresi 12 cm, Termoplastike (sprajt)", "njesia": "ml", "sasia": 10800 },
+
+    { "sectionNr": 7, "sectionTitle": "D. SINJALET DHE PAJISJET SHTESE. NGADALESUESIT E SHPEJTESISE" },
+    { "nr": 1, "kodi": "3.955", "emertimi": "FV tabela te ndryshme rrugore D=60cm", "njesia": "cope", "sasia": 15 },
+    { "nr": 2, "kodi": "3.954", "emertimi": "FV tabela rrugore treguese 60x20cm",   "njesia": "cope", "sasia": 20 },
+
+    { "sectionNr": 8, "sectionTitle": "TE NDRYSHME, ELEKTRIKE DHE SINJALISTIKA" },
+    { "nr": 1, "kodi": "3.164/2t", "emertimi": "F.V. Tuba te brinjezuar HDPE SN8 d=400mm", "njesia": "ml", "sasia": 1142 },
+
+    { "sectionNr": 9, "sectionTitle": "PUNIME SHTRESASH 2" },
+    { "nr": 1, "kodi": "2.262/3", "emertimi": "Shtrese betoni C12/15 (Muret prites, tuba betoni, kanale betoni dhe kuneta)", "njesia": "m3", "sasia": 196.6 },
+    { "nr": 2, "kodi": "2.262/5", "emertimi": "Shtrese betoni C20/25 (Kunetat, kanalet e betonit dhe betoni mbi tubin e betoni fi300 ne hyrje-dalje shtepie dhe degezime)", "njesia": "m3", "sasia": 410.4 },
+    { "nr": 3, "kodi": "2.583",   "emertimi": "Shtrese betoni C25/30 (Nga piketa127-147 rruge me beton per pjerresi mbi 15%)", "njesia": "m3", "sasia": 500 },
+    { "nr": 4, "kodi": "3.616/b", "emertimi": "F.V. Bordura betoni 15x30cm (Ne pjesen e kunetes ne zonen e banuar ku eshte parashikuar K.U.B)", "njesia": "ml", "sasia": 1200 },
+
+    { "sectionNr": 10, "sectionTitle": "PUNIME HEKUR BETONI" },
+    { "nr": 1, "kodi": "2.166",    "emertimi": "F.V. Hekur betoni periodik fi6-10mm (Rruga nga P.127-147 rruge me beton dhe ne hyrje-dalje te degezimeve)", "njesia": "ton", "sasia": 23.8 },
+    { "nr": 2, "kodi": "2.166/1a", "emertimi": "F.V. Hekur betoni periodik Ø > 12 mm (Per armimin e tombinove)", "njesia": "ton", "sasia": 7.5 },
+
+    { "sectionNr": 11, "sectionTitle": "PRODHIM I MATERIALEVE TE NDERTIMIT" },
+    { "nr": 1, "kodi": "1.130/p", "emertimi": "Tuba betoni fi300mm", "njesia": "cope", "sasia": 130 },
+
+    { "sectionNr": 12, "sectionTitle": "INSTALIME HIDRO-SANITARE DHE NGROHJE" },
+    { "nr": 1, "kodi": "2.52", "emertimi": "F.V. Tub kanalizimi pvc fi110", "njesia": "ml", "sasia": 350 },
+
+    { "sectionNr": 13, "sectionTitle": "UJESJELLES E KANALIZIM I JASHTEM" },
+    { "nr": 1, "kodi": "2.342", "emertimi": "Pusete shiu 40x60, h=100cm, me kapak gize", "njesia": "cope", "sasia": 40 }
+  ]
+}
