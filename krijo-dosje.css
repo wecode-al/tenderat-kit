@@ -1091,6 +1091,65 @@ button.k-stepper-tick {
 }
 .k-sup-single-file-x .material-icons { font-size: 16px; }
 
+/* Multi-doc variant (Listëpagesa) */
+.k-sup-single-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.k-sup-multi-count {
+  font: 600 11px/1 var(--t-font-ui);
+  color: var(--t-brand-text, #E27500);
+  background: rgba(255, 132, 0, 0.12);
+  padding: 4px 8px;
+  border-radius: 999px;
+  flex: none;
+}
+.k-sup-multi-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.k-sup-multi-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  border-radius: 8px;
+  background: var(--t-white);
+}
+.k-sup-multi-item > .material-icons:first-child {
+  color: var(--t-brand-text, #E27500);
+  font-size: 18px;
+  flex: none;
+}
+.k-sup-multi-item-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.k-sup-multi-item-meta strong {
+  font: 600 12.5px/1.2 var(--t-font-ui);
+  color: var(--t-fg-1);
+}
+.k-sup-multi-item-meta span {
+  font: 11px/1 var(--t-font-ui);
+  color: var(--t-fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-sup-multi .k-sup-single-pick {
+  margin-top: 10px;
+}
+
 button.k-sup-add-cta {
   display: inline-flex;
   align-items: center;
@@ -1791,6 +1850,53 @@ button.k-cons-add .material-icons { font-size: 18px; }
   color: #4338CA;
 }
 
+.k-vd-item-action {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  background: var(--t-white);
+  border-radius: 8px;
+  color: var(--t-fg-2);
+  font: 500 12.5px/1 var(--t-font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+.k-vd-item-action:hover {
+  border-color: var(--t-brand);
+  color: var(--t-brand);
+  background: color-mix(in oklab, var(--t-brand) 6%, var(--t-white));
+}
+.k-vd-item-action .material-icons { font-size: 16px; }
+.k-vd-item-action-label { font-weight: 500; }
+
+/* When the card has an action button, reserve trailing padding so tags
+   and subtitle don't run under it. */
+.k-vd-item:has(.k-vd-item-action) { padding-right: 170px; }
+
+.k-ds-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  border: 1px dashed var(--t-border-200, #E2E8F0);
+  border-radius: 10px;
+  background: var(--t-bg, #F8FAFC);
+  margin-bottom: 12px;
+}
+.k-ds-empty .material-icons { color: var(--t-fg-3, #94A3B8); font-size: 24px; flex: none; }
+.k-ds-empty p {
+  margin: 0;
+  font: 13px/1.45 var(--t-font-ui);
+  color: var(--t-fg-2);
+}
+
 .k-vd-qualif-wrap {
   margin-top: 8px;
   padding: 10px 12px;
@@ -2071,6 +2177,10 @@ button.k-vd-toggle-opt.is-on {
   font-size: 14px;
 }
 .k-doc-check.is-locked { cursor: not-allowed; }
+
+/* Përkohësisht fshihen rreshtat e dokumenteve të sistemit nga lista e zgjedhjes.
+   Për ta rikthyer: hiq këtë rregull. */
+.k-doc-row.is-system { display: none; }
 
 /* ---------- Manuali i çmimeve (system viewer) ---------- */
 .k-doc-preview-body.is-prev {

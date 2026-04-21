@@ -167,6 +167,34 @@ function formatDate(iso) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+// Given an array of { periudha: 'Muaj YYYY' }, return the next month label,
+// walking backwards from the most recent filled month. Defaults to the
+// month before `today` when the list is empty.
+const MONTHS_SQ = [
+  'Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor',
+  'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nëntor', 'Dhjetor',
+];
+function buildNextPeriod(items = []) {
+  const now = new Date();
+  let mi = now.getMonth() - 1;
+  let yr = now.getFullYear();
+  if (mi < 0) { mi = 11; yr -= 1; }
+  if (items.length > 0) {
+    // Parse the last-added month and step back one.
+    const last = items[items.length - 1]?.periudha || '';
+    const match = last.match(/^(\S+)\s+(\d{4})$/);
+    if (match) {
+      const idx = MONTHS_SQ.indexOf(match[1]);
+      if (idx >= 0) {
+        mi = idx - 1;
+        yr = parseInt(match[2], 10);
+        if (mi < 0) { mi = 11; yr -= 1; }
+      }
+    }
+  }
+  return `${MONTHS_SQ[mi]} ${yr}`;
+}
+
 function MiniList({ title, icon, hint, items, onOpen, onRemove, onEdit, renderItem, addLabel = 'Shto' }) {
   return (
     <div className="k-sup-list">
@@ -221,7 +249,55 @@ function MiniList({ title, icon, hint, items, onOpen, onRemove, onEdit, renderIt
 // Flat 4-up grid of the four capacity mini-lists (Staf / Makineri /
 // Certifikime / Licenca). Reused between DeklaroMbeshtetjen (support mode)
 // and Bashkimi (consortium mode).
-// Small single-doc card used inside the extended CapacityLists extras (Listëpagesa / Xhiro vjetore)
+// Multi-doc card — Listëpagesa can span one or many months, each with its
+// own period label and uploaded file. Calls `onAdd()` which is expected to
+// open the AddIsoDrawer with kind='payroll'; the caller wires the save path.
+function CapMultiDoc({ title, hint, icon, items = [], onAdd, onRemove }) {
+  const hasItems = items.length > 0;
+  return (
+    <div className={'k-sup-single k-sup-multi' + (hasItems ? ' has-file' : '')}>
+      <div className="k-sup-single-icon">
+        <span className="material-icons">{icon}</span>
+      </div>
+      <div className="k-sup-single-body">
+        <div className="k-sup-single-head">
+          <div>
+            <div className="k-sup-single-title">{title}</div>
+            <div className="k-sup-single-hint">{hint}</div>
+          </div>
+          {hasItems && (
+            <span className="k-sup-multi-count">
+              {items.length} {items.length === 1 ? 'muaj' : 'muaj'}
+            </span>
+          )}
+        </div>
+        {hasItems && (
+          <ul className="k-sup-multi-list">
+            {items.map((it, i) => (
+              <li key={i} className="k-sup-multi-item">
+                <span className="material-icons">insert_drive_file</span>
+                <div className="k-sup-multi-item-meta">
+                  <strong>{it.periudha || '—'}</strong>
+                  <span>{it.name}{it.size ? ' · ' + it.size : ''}</span>
+                </div>
+                <button type="button" className="k-sup-single-file-x"
+                        onClick={() => onRemove && onRemove(i)} aria-label="Hiq">
+                  <span className="material-icons">close</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <button type="button" className="k-sup-single-pick" onClick={onAdd}>
+          <span className="material-icons">add</span>
+          {hasItems ? 'Shto një muaj tjetër' : 'Ngarko listëpagesën'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Small single-doc card used inside the extended CapacityLists extras (Xhiro vjetore)
 // and on PartnerFillScreen. Mock upload only — sets a filename.
 function CapSingleDoc({ title, hint, icon, file, onPick, onClear }) {
   return (
@@ -352,38 +428,36 @@ function CapacityLists({ data, onOpen, onRemove, onEdit, staffHint, machineryHin
 
       {extras && (
         <>
-          <div className="k-sup-full">
-            <MiniList
-              title="Punë të ngjashme"
-              icon="engineering"
-              hint="Kontratat e ngjashme të realizuara."
-              items={data.similarWorks || []}
-              onOpen={() => onOpen('work')}
-              onRemove={onRemove('similarWorks')}
-              onEdit={onEdit && ((i) => onEdit('similarWorks', i))}
-              addLabel="Shto punë të ngjashme"
-              renderItem={(it) => (
-                <>
-                  <span className="k-sup-item-name">{it.name}</span>
-                  {it.issuer && <span className="k-sup-item-meta">{it.issuer}</span>}
-                  {it.expires && <span className="k-sup-item-meta">Skadon {formatDate(it.expires)}</span>}
-                  {it.file && (
-                    <span className="k-sup-item-tag is-doc">
-                      <span className="material-icons">description</span>
-                      {it.file.name}
-                    </span>
-                  )}
-                </>
-              )}
-            />
-          </div>
-          <CapSingleDoc
+          <MiniList
+            title="Punë të ngjashme"
+            icon="engineering"
+            hint="Kontratat e ngjashme të realizuara."
+            items={data.similarWorks || []}
+            onOpen={() => onOpen('work')}
+            onRemove={onRemove('similarWorks')}
+            onEdit={onEdit && ((i) => onEdit('similarWorks', i))}
+            addLabel="Shto punë të ngjashme"
+            renderItem={(it) => (
+              <>
+                <span className="k-sup-item-name">{it.name}</span>
+                {it.issuer && <span className="k-sup-item-meta">{it.issuer}</span>}
+                {it.expires && <span className="k-sup-item-meta">Skadon {formatDate(it.expires)}</span>}
+                {it.file && (
+                  <span className="k-sup-item-tag is-doc">
+                    <span className="material-icons">description</span>
+                    {it.file.name}
+                  </span>
+                )}
+              </>
+            )}
+          />
+          <CapMultiDoc
             title="Listëpagesa"
-            hint="Listëpagesa më e fundit e stafit."
+            hint="Listëpagesat e stafit — një muaj ose më shumë sipas kërkesës."
             icon="receipt_long"
-            file={data.listpagesa || null}
-            onPick={() => extras.onPickDoc && extras.onPickDoc('listpagesa', 'Listepagesa')}
-            onClear={() => extras.onClearDoc && extras.onClearDoc('listpagesa')}
+            items={Array.isArray(data.listpagesa) ? data.listpagesa : []}
+            onAdd={() => extras.onAddMulti && extras.onAddMulti('listpagesa', 'Listepagesa')}
+            onRemove={(i) => extras.onRemoveMulti && extras.onRemoveMulti('listpagesa', i)}
           />
           <CapSingleDoc
             title="Xhiro vjetore"
@@ -459,6 +533,7 @@ function DeklaroMbeshtetjen({ form, setSupport }) {
     iso: 'certificates',
     license: 'licenses',
     work: 'similarWorks',
+    payroll: 'listpagesa',
   };
   const STORE_TO_KIND = {
     staff: 'staff',
@@ -466,13 +541,21 @@ function DeklaroMbeshtetjen({ form, setSupport }) {
     certificates: 'iso',
     licenses: 'license',
     similarWorks: 'work',
+    listpagesa: 'payroll',
   };
 
   function handleDrawerSave(data) {
     const storeKey = KIND_TO_STORE[drawerKind];
     if (!storeKey || !data) return;
     if (!data.name) return;
-    if (editIndex >= 0) {
+    if (storeKey === 'listpagesa') {
+      const current = Array.isArray(s[storeKey]) ? s[storeKey] : [];
+      if (editIndex >= 0) {
+        setSupport(storeKey)(current.map((it, idx) => (idx === editIndex ? data : it)));
+      } else {
+        setSupport(storeKey)([...current, data]);
+      }
+    } else if (editIndex >= 0) {
       replaceAt(storeKey)(editIndex, data);
     } else {
       push(storeKey)(data);
@@ -572,6 +655,13 @@ function DeklaroMbeshtetjen({ form, setSupport }) {
             extras={{
               onPickDoc: (key, label) => setSupport(key)({ name: label + '.pdf', size: '240 KB' }),
               onClearDoc: (key) => setSupport(key)(null),
+              onAddMulti: (key) => {
+                if (key === 'listpagesa') { setEditIndex(-1); setDrawerKind('payroll'); }
+              },
+              onRemoveMulti: (key, idx) => {
+                const current = Array.isArray(s[key]) ? s[key] : [];
+                setSupport(key)(current.filter((_, i) => i !== idx));
+              },
             }}
           />
         </>
@@ -682,7 +772,7 @@ function Bashkimi({ form, setConsortium }) {
         linkSent: false, shareLink: '',
         capacities: {
           staff: [], machinery: [], certificates: [], licenses: [],
-          similarWorks: [], listpagesa: null, xhiro: null,
+          similarWorks: [], listpagesa: [], xhiro: null,
         },
       },
     ]);
@@ -709,6 +799,7 @@ function Bashkimi({ form, setConsortium }) {
     iso: 'certificates',
     license: 'licenses',
     work: 'similarWorks',
+    payroll: 'listpagesa',
   };
   const STORE_TO_KIND = {
     staff: 'staff',
@@ -716,6 +807,7 @@ function Bashkimi({ form, setConsortium }) {
     certificates: 'iso',
     licenses: 'license',
     similarWorks: 'work',
+    listpagesa: 'payroll',
   };
   function handleDrawerSave(data) {
     const storeKey = KIND_TO_STORE[drawerKind];
@@ -937,6 +1029,17 @@ function Bashkimi({ form, setConsortium }) {
                         onPickDoc: (key, label) =>
                           setPartnerCapacity(p.id, key, { name: label + '.pdf', size: '240 KB' }),
                         onClearDoc: (key) => setPartnerCapacity(p.id, key, null),
+                        onAddMulti: (key) => {
+                          if (key === 'listpagesa') {
+                            setEditIndex(-1);
+                            setDrawerPartnerId(p.id);
+                            setDrawerKind('payroll');
+                          }
+                        },
+                        onRemoveMulti: (key, idx) => {
+                          const current = Array.isArray(caps[key]) ? caps[key] : [];
+                          setPartnerCapacity(p.id, key, current.filter((_, i) => i !== idx));
+                        },
                       }}
                     />
                   </div>
@@ -1184,10 +1287,11 @@ const DOKUMENTACIONI_LIST = [
   { id: 'xhiro',    name: 'Xhiro Vjetore', required: true, category: 'financiar' },
   { id: 'pasqyra',  name: 'Pasqyra Financiare', required: true, category: 'financiar' },
   { id: 'bilanci',  name: 'Bilanci', required: true, category: 'financiar' },
+  { id: 'listpagesa', name: 'Listëpagesa', required: true, category: 'financiar', multi: true },
   { id: 'specifika',name: 'Deklaratë në përmbushje me specifikimet teknike', required: true, category: 'teknik' },
   { id: 'grafiku',  name: 'Deklaratë për grafikun e punimeve / shërbimeve / furnizimit', required: true, category: 'teknik' },
-  { id: 'manuali-cmimeve', name: 'Manuali i çmimeve të ndërtimit (2023)', required: true, category: 'preventivi', system: true, year: 2023, validFor: 2026 },
   { id: 'preventivi-bosh', name: 'Preventivi bosh — pa çmime', required: true, category: 'preventivi', needsUpload: true },
+  { id: 'manuali-cmimeve', name: 'Manuali i çmimeve të ndërtimit (2023)', required: true, category: 'preventivi', system: true, year: 2023, validFor: 2026 },
   { id: 'metodologjia', name: 'Metodologjia',  required: true, category: 'metodologjia' },
 ];
 
@@ -1203,7 +1307,7 @@ const DOKUMENTACIONI_CATEGORIES = [
 // Right-pane interactive form shown when the "vete-deklarim" doc is previewed.
 // Lets the user pick staf / makineri / katalog entries from the company profile
 // or create new ones inline (with a "Ruaj tek profili i kompanisë" toggle).
-function VdCard({ selected, onToggle, icon, title, subtitle, tags, children }) {
+function VdCard({ selected, onToggle, icon, title, subtitle, tags, children, action }) {
   return (
     <div className={'k-vd-item' + (selected ? ' is-on' : '')}>
       <label className="k-vd-check">
@@ -1227,6 +1331,17 @@ function VdCard({ selected, onToggle, icon, title, subtitle, tags, children }) {
         )}
         {children}
       </div>
+      {action && (
+        <button
+          type="button"
+          className="k-vd-item-action"
+          aria-label={action.label || 'Shiko dokumentin'}
+          title={action.label || 'Shiko dokumentin'}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); action.onClick && action.onClick(); }}>
+          <span className="material-icons">{action.icon || 'visibility'}</span>
+          <span className="k-vd-item-action-label">{action.label || 'Shiko dokumentin'}</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -1257,6 +1372,170 @@ function QualifPicker({ options, value, onChange }) {
   );
 }
 
+
+// Map each document id from DOKUMENTACIONI_LIST to a location in PROFILE_TREE
+// plus the drawer kind used to add a new instance. `path: [rootId, mode, id]`
+// where mode is 'direct' (single leaf in the root's children) or 'folder'
+// (a sub-folder whose children are selectable).
+const DOC_PROFILE_MAP = {
+  // Legal
+  konflikt:  { path: ['ligj','direct','konflikt'],  drawerKind: 'doc-generic', icon: 'gavel',             rowIcon: 'gavel',             groupLabel: 'Deklarata mbi Konfliktin e Interesit', addLabel: 'Shto deklaratë të re' },
+  punesim:   { path: ['ligj','direct','punesim'],   drawerKind: 'doc-generic', icon: 'work',              rowIcon: 'work',              groupLabel: 'Deklarata për dispozitat e punës',     addLabel: 'Shto deklaratë të re' },
+  kriteret:  { path: ['ligj','direct','kriteret'],  drawerKind: 'doc-generic', icon: 'rule',              rowIcon: 'rule',              groupLabel: 'Deklarata për kriteret',                addLabel: 'Shto deklaratë të re' },
+  pavarur:   { path: ['ligj','direct','pavarur'],   drawerKind: 'doc-generic', icon: 'verified_user',     rowIcon: 'verified_user',     groupLabel: 'Deklarata për ofertat e pavarura',      addLabel: 'Shto deklaratë të re' },
+  licenca:   { path: ['ligj','direct','l5'],        drawerKind: 'license',     icon: 'workspace_premium', rowIcon: 'workspace_premium', groupLabel: 'Licencat profesionale',                 addLabel: 'Shto licencë' },
+  // Financial
+  xhiro:      { path: ['fin','direct','f1'],         drawerKind: 'doc-generic', icon: 'trending_up',      rowIcon: 'trending_up',      groupLabel: 'Vërtetim i xhiros vjetore',             addLabel: 'Shto vërtetim xhiroje' },
+  pasqyra:    { path: ['fin','direct','f2'],         drawerKind: 'doc-generic', icon: 'assessment',       rowIcon: 'assessment',       groupLabel: 'Pasqyrat financiare',                    addLabel: 'Shto pasqyrë financiare' },
+  bilanci:    { path: ['fin','direct','f3'],         drawerKind: 'doc-generic', icon: 'account_balance',  rowIcon: 'account_balance',  groupLabel: 'Bilanci',                                addLabel: 'Shto bilanc' },
+  listpagesa: { path: ['fin','folder','listpg'],     drawerKind: 'payroll',     icon: 'receipt_long',     rowIcon: 'receipt_long',     groupLabel: 'Listëpagesat mujore',                    addLabel: 'Shto listëpagesë' },
+  // Technical
+  specifika:  { path: ['tek','direct','specifika'],  drawerKind: 'doc-generic', icon: 'settings',         rowIcon: 'settings',         groupLabel: 'Deklarata për specifikimet teknike',     addLabel: 'Shto deklaratë të re' },
+  grafiku:    { path: ['tek','direct','grafiku'],    drawerKind: 'doc-generic', icon: 'timeline',         rowIcon: 'timeline',         groupLabel: 'Deklarata për grafikun e punimeve',      addLabel: 'Shto deklaratë të re' },
+};
+
+// Pull the selectable items for a doc from PROFILE_TREE.
+function readProfileItems(mapping) {
+  const tree = window.PROFILE_TREE;
+  if (!tree || !mapping) return [];
+  const [rootId, mode, id] = mapping.path;
+  const root = tree.find((n) => n.id === rootId);
+  if (!root || !root.children) return [];
+  if (mode === 'direct') {
+    const leaf = root.children.find((c) => c.id === id);
+    return leaf ? [leaf] : [];
+  }
+  // folder mode
+  const folder = root.children.find((c) => c.id === id);
+  if (!folder || !folder.children) return [];
+  return folder.children.filter((c) => !c.add);
+}
+
+function DocSelector({ docId, doc, form, setForm, parentSelected, setParentSelected }) {
+  const mapping = DOC_PROFILE_MAP[docId];
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [saveToProfile, setSaveToProfile] = React.useState(true);
+  // force a re-read when PROFILE_TREE mutates (the mutator sets this stamp)
+  const [bump, setBump] = React.useState(0);
+
+  if (!mapping) return null;
+
+  const items = readProfileItems(mapping);
+  const selectedIds = (form.docSelections && form.docSelections[docId]) || [];
+  const selected = new Set(selectedIds);
+
+  const setDocSelections = (nextArr) => {
+    setForm((f) => ({
+      ...f,
+      docSelections: { ...(f.docSelections || {}), [docId]: nextArr },
+    }));
+    // Keep the left-list checkbox in sync: if at least one row is picked here,
+    // the parent doc should be checked; if none, uncheck it.
+    if (setParentSelected && Array.isArray(parentSelected)) {
+      const hasAny = nextArr.length > 0;
+      const isOn = parentSelected.includes(docId);
+      if (hasAny && !isOn) setParentSelected([...parentSelected, docId]);
+      else if (!hasAny && isOn) setParentSelected(parentSelected.filter((x) => x !== docId));
+    }
+  };
+
+  const toggle = (id) => {
+    if (selected.has(id)) setDocSelections(selectedIds.filter((x) => x !== id));
+    else setDocSelections([...selectedIds, id]);
+  };
+
+  const onDrawerSave = (entry) => {
+    if (!entry || !entry.name) { setDrawerOpen(false); return; }
+    const clientId = 'doc-' + docId + '-' + Date.now().toString(36);
+    if (saveToProfile !== false && typeof window.addDocToProfile === 'function') {
+      window.addDocToProfile(mapping.path, { ...entry, clientId });
+    }
+    // Auto-select the freshly added row. For 'direct' mode the id keeps
+    // matching the mapping's leaf id; for 'folder' mode the new row uses
+    // clientId.
+    const newId = mapping.path[1] === 'direct' ? mapping.path[2] : clientId;
+    const nextArr = Array.from(new Set([...selectedIds, newId]));
+    setDocSelections(nextArr);
+    setBump((n) => n + 1);
+    setDrawerOpen(false);
+  };
+
+  const buildSubtitle = (it) => {
+    const parts = [];
+    if (it.uploaded) parts.push('Ngarkuar ' + it.uploaded);
+    if (it.expires)  parts.push('Skadon ' + it.expires);
+    return parts.join(' · ');
+  };
+  const buildTags = (it) => {
+    if (!it.status) return [];
+    const toneFor = { ok: 'owned', warn: 'rent', missing: 'ghost' };
+    const labelFor = { ok: 'Në rregull', warn: 'Duke skaduar', missing: 'Mungon' };
+    return [{ label: labelFor[it.status] || 'Në rregull', tone: toneFor[it.status] || 'neutral' }];
+  };
+
+  return (
+    <div className="k-vd-shell">
+      <header className="k-vd-header">
+        <span className="material-icons">{mapping.icon}</span>
+        <div>
+          <h3>{doc?.name || mapping.groupLabel}</h3>
+          <p>
+            Zgjidh dokumentin ekzistues nga profili i kompanisë ose shto një të ri direkt për këtë dosje.
+          </p>
+        </div>
+      </header>
+
+      <section className="k-vd-group">
+        <div className="k-vd-group-head">
+          <span className="material-icons">{mapping.rowIcon}</span>
+          <h4>{mapping.groupLabel}</h4>
+          <span className="k-vd-group-count">{selected.size} zgjedhur</span>
+        </div>
+
+        {items.length === 0 ? (
+          <div className="k-ds-empty">
+            <span className="material-icons">folder_open</span>
+            <p>Ende s'ka asnjë dokument të këtij lloji në profilin e kompanisë. Klikoni "{mapping.addLabel}" për të shtuar.</p>
+          </div>
+        ) : (
+          <div className="k-vd-items" data-bump={bump}>
+            {items.map((it) => (
+              <VdCard
+                key={it.id}
+                selected={selected.has(it.id)}
+                onToggle={() => toggle(it.id)}
+                icon={mapping.rowIcon}
+                title={it.title}
+                subtitle={buildSubtitle(it)}
+                tags={buildTags(it)}
+                action={{ icon: 'visibility', label: 'Shiko dokumentin', onClick: () => {} }}
+              />
+            ))}
+          </div>
+        )}
+
+        <button type="button" className="k-vd-add" onClick={() => setDrawerOpen(true)}>
+          <span className="material-icons">add</span>
+          {mapping.addLabel}
+        </button>
+      </section>
+
+      {window.AddIsoDrawer && (
+        <window.AddIsoDrawer
+          open={drawerOpen}
+          kind={mapping.drawerKind}
+          onClose={() => setDrawerOpen(false)}
+          onSave={onDrawerSave}
+          saveToProfileToggle={{
+            value: saveToProfile,
+            onChange: setSaveToProfile,
+            label: 'Ruaj tek profili i kompanisë',
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
 function VeteDeklarimForm({ form, setForm }) {
   const vd = form.veteDeklarim;
@@ -2692,8 +2971,6 @@ function PreventiviUpload({ form, setForm }) {
 function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
   const [activeId, setActiveId] = React.useState(null);
   const [filter, setFilter]     = React.useState('all'); // all | auto | manual | none
-  const [coef, setCoef]         = React.useState(100);   // % e çmimeve të manualit (100 = çmim i plotë)
-  const [infoOpen, setInfoOpen] = React.useState(true);
 
   const dataRows = React.useMemo(() => rows.filter((r) => r.type === 'row'), [rows]);
   const sectionRows = React.useMemo(() => rows.filter((r) => r.type === 'section'), [rows]);
@@ -2719,14 +2996,12 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
     return sums;
   }, [dataRows]);
 
-  const grandManual = React.useMemo(() => {
+  const grand = React.useMemo(() => {
     let g = 0;
     for (const r of dataRows) if (r.vlefta) g += Number(r.vlefta);
     return g;
   }, [dataRows]);
 
-  const factor = coef / 100;
-  const grand  = +(grandManual * factor).toFixed(2);
   const tvsh   = +(grand * 0.20).toFixed(2);
   const totali = +(grand + tvsh).toFixed(2);
 
@@ -2831,41 +3106,6 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
         </div>
       )}
 
-      {infoOpen && (
-        <div className="k-pe-info">
-          <span className="material-icons k-pe-info-ico">info</span>
-          <div className="k-pe-info-body">
-            <strong>Çmimet zyrtare vs. oferta juaj</strong>
-            <p>
-              Totali i mësipërm llogaritet me <b>çmimet e plota të manualit 2023</b>. Rregullo
-              koeficientin më poshtë, ose mbishkruaj çmime rresht-për-rresht.
-            </p>
-            <div className="k-pe-coef">
-              <label htmlFor="k-pe-coef">Koeficienti i ofertës</label>
-              <input id="k-pe-coef" type="range" min="70" max="110" step="1"
-                     value={coef} onChange={(e) => setCoef(Number(e.target.value))} />
-              <span className="k-pe-coef-val">{coef}%</span>
-              <button type="button" className="k-pe-coef-reset"
-                      onClick={() => setCoef(100)} disabled={coef === 100}>
-                Rivendos
-              </button>
-            </div>
-            <p className="k-pe-info-note">
-              Me koef. <b>{coef}%</b>: Shuma pa TVSH <b>{formatCurrency(grand)} ALL</b> ·
-              TVSH <b>{formatCurrency(tvsh)} ALL</b> ·
-              Totali <b>{formatCurrency(totali)} ALL</b>
-              {coef !== 100 && (
-                <> · <span className="k-pe-diff">Ulje prej {formatCurrency(grandManual - grand)} ALL nga çmimi i plotë</span></>
-              )}
-            </p>
-          </div>
-          <button type="button" className="k-pe-info-close"
-                  onClick={() => setInfoOpen(false)} aria-label="Mbyll">
-            <span className="material-icons">close</span>
-          </button>
-        </div>
-      )}
-
       <div className="k-pe-main">
         <div className="k-pe-table-wrap">
           <table className="k-man-table k-pe-table">
@@ -2884,7 +3124,7 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
             <tbody>
               {visibleRows.map((r) => {
                 if (r.type === 'section') {
-                  const sum = (sectionSums[r.id] || 0) * factor;
+                  const sum = sectionSums[r.id] || 0;
                   return (
                     <tr key={r.id} className="k-pe-section-row">
                       <td colSpan={6}>
@@ -3179,10 +3419,14 @@ function KrijoStep2({ selected, setSelected, preview, setPreview, form, setForm,
       </aside>
 
       <section className="k-doc-preview">
-        <div className="k-doc-preview-head">
-          <span className="k-doc-preview-eyebrow">Pamja paraprake</span>
-          <h3>{current.name}</h3>
-          {current.id !== 'manuali-cmimeve' && current.id !== 'preventivi-bosh' && (
+        {!(current.id === 'vete-deklarim'
+           || current.id === 'manuali-cmimeve'
+           || current.id === 'preventivi-bosh'
+           || current.id === 'metodologjia'
+           || DOC_PROFILE_MAP[current.id]) && (
+          <div className="k-doc-preview-head">
+            <span className="k-doc-preview-eyebrow">Pamja paraprake</span>
+            <h3>{current.name}</h3>
             <div className="k-doc-preview-actions">
               <button className="k-doc-preview-btn" title="Shkarko">
                 <span className="material-icons">download</span>
@@ -3191,9 +3435,9 @@ function KrijoStep2({ selected, setSelected, preview, setPreview, form, setForm,
                 <span className="material-icons">print</span>
               </button>
             </div>
-          )}
-        </div>
-        <div className={'k-doc-preview-body' + (current.id === 'vete-deklarim' ? ' is-vd' : '') + ((current.id === 'manuali-cmimeve' || current.id === 'preventivi-bosh') ? ' is-prev' : '')}>
+          </div>
+        )}
+        <div className={'k-doc-preview-body' + (current.id === 'vete-deklarim' ? ' is-vd' : '') + ((current.id === 'manuali-cmimeve' || current.id === 'preventivi-bosh') ? ' is-prev' : '') + (DOC_PROFILE_MAP[current.id] ? ' is-vd' : '')}>
           {current.id === 'vete-deklarim' ? (
             <VeteDeklarimForm form={form} setForm={setForm} />
           ) : current.id === 'manuali-cmimeve' ? (
@@ -3202,6 +3446,8 @@ function KrijoStep2({ selected, setSelected, preview, setPreview, form, setForm,
             <PreventiviUpload form={form} setForm={setForm} />
           ) : current.id === 'metodologjia' ? (
             <MetodologjiaGenerator form={form} setForm={setForm} selectedDocs={selected} />
+          ) : DOC_PROFILE_MAP[current.id] ? (
+            <DocSelector docId={current.id} doc={current} form={form} setForm={setForm} parentSelected={selected} setParentSelected={setSelected} />
           ) : (
             <div className="k-doc-paper">
               <div className="k-doc-paper-stamp">
@@ -3292,7 +3538,7 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
       certificates: [],// [{ name, issuer }]
       licenses: [],    // [{ name, issuer }]
       similarWorks: [],      // Punë të ngjashme — multi, uses `work` drawer kind
-      listpagesa: null,      // Listëpagesa — 1 doc { name, size }
+      listpagesa: [],      // Listëpagesa — 1 doc { name, size }
       xhiro: null,           // Xhiro vjetore — 1 doc { name, size }
       emailStatus: null,     // null | 'sent' — email kërkese u dërgua
       emailVerified: false,  // Email kontakti u konfirmua nga kompania mbështetëse
@@ -3317,7 +3563,7 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
           shareLink: '',
           capacities: {
             staff: [], machinery: [], certificates: [], licenses: [],
-            similarWorks: [], listpagesa: null, xhiro: null,
+            similarWorks: [], listpagesa: [], xhiro: null,
           },
         },
       ],
@@ -3342,6 +3588,9 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
       docsExtra:     [], // [{ id, name, size }]
       generated:     null,
     },
+    // Per-doc selection of existing PROFILE_TREE items to include in this dossier.
+    // Shape: { [docId]: [itemId1, itemId2, ...] }
+    docSelections: {},
   });
   const [selectedDocs, setSelectedDocs] = React.useState([
     'vete-deklarim', 'konflikt', 'kriteret', 'pavarur', 'xhiro',
@@ -3429,3 +3678,4 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
   );
 }
 window.KrijoDosjeNew = KrijoDosjeNew;
+window.buildNextPeriod = buildNextPeriod;

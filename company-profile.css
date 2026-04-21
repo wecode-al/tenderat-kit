@@ -448,7 +448,8 @@
   text-transform: uppercase;
   color: var(--t-fg-2);
 }
-.add-iso-field input {
+.add-iso-field input,
+.add-iso-field select {
   height: 42px;
   padding: 0 12px;
   border: 1px solid var(--t-border-200);
@@ -459,9 +460,20 @@
   color: var(--t-fg-1);
   outline: none;
   transition: border-color 120ms, box-shadow 120ms;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.add-iso-field select {
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
 }
 .add-iso-field input::placeholder { color: var(--t-fg-3); }
-.add-iso-field input:focus {
+.add-iso-field input:focus,
+.add-iso-field select:focus {
   border-color: var(--t-brand);
   box-shadow: 0 0 0 3px rgba(255,132,0,0.18);
 }

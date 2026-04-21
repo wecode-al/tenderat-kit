@@ -101,7 +101,7 @@ function PartnerFillScreen({ invite, onDone }) {
     certificates: [],
     licenses: [],
     similarWorks: [],     // "Punë të ngjashme" — multiple entries (work kind)
-    listpagesa: null,     // one doc — { name }
+    listpagesa: [],       // 1 ose më shumë muaj: [{ periudha, name, size }]
     xhiro: null,          // one doc — { name }
   });
   const [drawerKind, setDrawerKind] = React.useState(null);
@@ -125,6 +125,7 @@ function PartnerFillScreen({ invite, onDone }) {
     iso: 'certificates',
     license: 'licenses',
     work: 'similarWorks',
+    payroll: 'listpagesa',
   };
   const STORE_TO_KIND = {
     staff: 'staff',
@@ -132,16 +133,18 @@ function PartnerFillScreen({ invite, onDone }) {
     certificates: 'iso',
     licenses: 'license',
     similarWorks: 'work',
+    listpagesa: 'payroll',
   };
 
   const handleDrawerSave = (entry) => {
     const key = KIND_TO_STORE[drawerKind];
     if (!key || !entry || !entry.name) return;
     setData((d) => {
+      const list = Array.isArray(d[key]) ? d[key] : [];
       if (editIndex >= 0) {
-        return { ...d, [key]: d[key].map((it, idx) => (idx === editIndex ? entry : it)) };
+        return { ...d, [key]: list.map((it, idx) => (idx === editIndex ? entry : it)) };
       }
-      return { ...d, [key]: [...d[key], entry] };
+      return { ...d, [key]: [...list, entry] };
     });
     setEditIndex(-1);
   };
@@ -163,14 +166,21 @@ function PartnerFillScreen({ invite, onDone }) {
   const total =
     data.staff.length + data.machinery.length + data.certificates.length +
     data.licenses.length + data.similarWorks.length +
-    (data.listpagesa ? 1 : 0) + (data.xhiro ? 1 : 0);
+    (Array.isArray(data.listpagesa) ? data.listpagesa.length : (data.listpagesa ? 1 : 0)) +
+    (data.xhiro ? 1 : 0);
 
-  // Mock-pick a "file" for the single-doc uploads (Lispagesa / Xhiro). This
-  // mirrors the pattern used in FirstLogin — no real upload happens.
+  // Mock-pick a "file" for the single-doc uploads (Xhiro). No real upload.
   const pickFile = (key, label) => {
     setData((d) => ({ ...d, [key]: { name: label + '.pdf', size: '240 KB' } }));
   };
   const clearFile = (key) => setData((d) => ({ ...d, [key]: null }));
+
+  const removeMulti = (key, idx) => {
+    setData((d) => ({
+      ...d,
+      [key]: (Array.isArray(d[key]) ? d[key] : []).filter((_, i) => i !== idx),
+    }));
+  };
 
   // On the verify stage we show a centered card (Confirm-email style). After
   // the partner unlocks, we switch to the wider wizard layout with the hero.
@@ -303,6 +313,10 @@ function PartnerFillScreen({ invite, onDone }) {
                 extras={{
                   onPickDoc: (key, label) => pickFile(key, label),
                   onClearDoc: (key) => clearFile(key),
+                  onAddMulti: (key) => {
+                    if (key === 'listpagesa') { setEditIndex(-1); setDrawerKind('payroll'); }
+                  },
+                  onRemoveMulti: (key, idx) => removeMulti(key, idx),
                 }}
               />
             </section>

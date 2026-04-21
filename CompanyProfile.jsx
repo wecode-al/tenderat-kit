@@ -13,6 +13,10 @@ const PROFILE_TREE = [
     { id: 'l7', title: 'Historiku NIPT', status: 'missing' },
     { id: 'l8', title: 'Llogaria Bankare', status: 'ok', uploaded: '22 Janar 2026' },
     { id: 'l9', title: 'Vërtetim mospërjashtim APP', status: 'missing' },
+    { id: 'konflikt', title: 'Deklarata mbi Konfliktin e Interesit', status: 'ok', uploaded: '12 Shkurt 2026' },
+    { id: 'punesim',  title: 'Deklarata për dispozitat e punës',      status: 'ok', uploaded: '12 Shkurt 2026' },
+    { id: 'kriteret', title: 'Deklarata për kriteret e kualifikimit', status: 'ok', uploaded: '12 Shkurt 2026' },
+    { id: 'pavarur',  title: 'Deklarata për Ofertat e Pavarura',      status: 'ok', uploaded: '12 Shkurt 2026' },
     { id: 'iso', title: 'Certifikimet ISO', folder: true, expanded: true, children: [
       { id: 'iso1', title: 'ISO 9001', status: 'ok', uploaded: '14 Nën 2025' },
       { id: 'iso2', title: 'ISO 45001', status: 'ok', uploaded: '03 Dhjet 2025' },
@@ -23,6 +27,12 @@ const PROFILE_TREE = [
     { id: 'f1', title: 'Xhiro Vjetore', status: 'ok', uploaded: '05 Shkurt 2026' },
     { id: 'f2', title: 'Pasqyra Financiare', status: 'ok', uploaded: '28 Janar 2026' },
     { id: 'f3', title: 'Bilanci', status: 'warn', uploaded: '12 Janar 2026' },
+    { id: 'listpg', title: 'Listëpagesa', folder: true, expanded: true, count: '3 muaj', children: [
+      { id: 'lp1', title: 'Shkurt 2026', status: 'ok', uploaded: '05 Mars 2026' },
+      { id: 'lp2', title: 'Janar 2026', status: 'ok', uploaded: '04 Shkurt 2026' },
+      { id: 'lp3', title: 'Dhjetor 2025', status: 'ok', uploaded: '06 Janar 2026' },
+      { id: 'lp-add', title: 'Shto listëpagesë', add: true },
+    ]},
   ]},
   { id: 'tek', title: 'Dokumenta teknik', expanded: true, children: [
     { id: 'stafi', title: 'Stafi', folder: true, expanded: true, count: '3 persona', children: [
@@ -42,6 +52,8 @@ const PROFILE_TREE = [
       { id: 'k3', title: 'Katalog pajisje laboratori', status: 'ok', uploaded: '10 Dhjet 2025' },
       { id: 'k-add', title: 'Shto katalog / autorizim', add: true },
     ]},
+    { id: 'specifika', title: 'Deklaratë në përmbushje me specifikimet teknike', status: 'ok', uploaded: '14 Shkurt 2026' },
+    { id: 'grafiku',   title: 'Deklaratë për grafikun e punimeve',                status: 'ok', uploaded: '14 Shkurt 2026' },
   ]},
   { id: 'pun', title: 'Punët e ngjashme', expanded: false, count: '0 punë', children: [
     { id: 'pun-add', title: 'Shto punë të ngjashme', add: true },
@@ -84,6 +96,7 @@ function TreeNode({ node, depth, onAdd, onSelect, onFolderSelect, selectedId, pa
     : node.id === 'mak' ? 'machine'
     : node.id === 'kat' ? 'catalog'
     : node.id === 'pun' ? 'work'
+    : node.id === 'listpg' ? 'payroll'
     : parentKind;
 
   const onClick = (e) => {
@@ -367,6 +380,7 @@ function FolderOverview({ folder, onAdd, onOpenNode }) {
     : folder.id === 'mak' ? 'machine'
     : folder.id === 'kat' ? 'catalog'
     : folder.id === 'pun' ? 'work'
+    : folder.id === 'listpg' ? 'payroll'
     : 'iso';
 
   return (
@@ -850,6 +864,39 @@ function CompanyProfile({ onNav }) {
 }
 window.CompanyProfile = CompanyProfile;
 window.PROFILE_TREE = PROFILE_TREE;
+
+// Generic mutator for the new DocSelector: append (folder mode) or replace
+// in place (direct mode) a PROFILE_TREE leaf.
+//   pathArr = [rootId, 'direct'|'folder', leafOrFolderId]
+//   entry   = { clientId, name, issued?, expires?, file?, periudha? }
+window.addDocToProfile = function (pathArr, entry) {
+  if (!pathArr || pathArr.length !== 3 || !entry) return;
+  const [rootId, mode, id] = pathArr;
+  const root = PROFILE_TREE.find((n) => n.id === rootId);
+  if (!root || !root.children) return;
+  const title = entry.periudha || entry.name || entry.title || 'Dokument';
+  const row = {
+    id: entry.clientId || id,
+    title,
+    status: 'ok',
+    uploaded: entry.uploaded || 'Sot',
+    expires: entry.expires,
+  };
+  if (mode === 'folder') {
+    const folder = root.children.find((c) => c.id === id);
+    if (!folder) return;
+    if (!folder.children) folder.children = [];
+    const addIdx = folder.children.findIndex((c) => c.add);
+    if (addIdx >= 0) folder.children.splice(addIdx, 0, row);
+    else folder.children.push(row);
+    return;
+  }
+  // direct — replace the existing leaf in place so the "latest" version wins.
+  const idx = root.children.findIndex((c) => c.id === id);
+  if (idx >= 0) {
+    root.children[idx] = { ...root.children[idx], ...row, id };
+  }
+};
 
 // Mutator used by the Krijo-dosje vete-deklarim flow to persist an inline-created
 // catalog into the Katalog / Autorizim folder of the company profile.

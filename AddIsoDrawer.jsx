@@ -682,6 +682,81 @@ function SimpleForm({ nameLabel, namePh, kind, onChange, initial }) {
   );
 }
 
+// Payroll form — Listëpagesa for a given month. Month (1-12) + year +
+// file upload. Mirrors the SimpleForm visual pattern so the drawer chrome
+// stays identical.
+const MONTHS_SQ_FULL = [
+  { v: 1,  l: 'Janar' },   { v: 2,  l: 'Shkurt' }, { v: 3,  l: 'Mars' },
+  { v: 4,  l: 'Prill' },   { v: 5,  l: 'Maj' },    { v: 6,  l: 'Qershor' },
+  { v: 7,  l: 'Korrik' },  { v: 8,  l: 'Gusht' },  { v: 9,  l: 'Shtator' },
+  { v: 10, l: 'Tetor' },   { v: 11, l: 'Nëntor' }, { v: 12, l: 'Dhjetor' },
+];
+
+function PayrollForm({ onChange, initial }) {
+  const init = initial || {};
+  const today = new Date();
+  const prevMonth = today.getMonth() === 0 ? 12 : today.getMonth();
+  const prevYear  = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+  const [muaji, setMuaji] = React.useState(init.muaji != null ? Number(init.muaji) : prevMonth);
+  const [viti,  setViti]  = React.useState(init.viti || prevYear);
+  const [file,  setFile]  = React.useState(init.file || null);
+
+  const periudha = `${MONTHS_SQ_FULL.find((m) => m.v === muaji)?.l || ''} ${viti}`;
+  const safeName = `Listepagesa_${periudha.replace(/\s+/g, '_')}.pdf`;
+
+  React.useEffect(() => {
+    if (!onChange) return;
+    onChange({
+      name: file ? file.name : safeName,
+      size: file?.size || '240 KB',
+      muaji, viti, periudha, file,
+    });
+  }, [muaji, viti, file]); // eslint-disable-line
+
+  // Years offered: current year + 5 previous
+  const years = [];
+  for (let i = 0; i < 6; i++) years.push(today.getFullYear() - i);
+
+  return (
+    <div className="add-iso-form">
+      <div className="add-iso-row">
+        <label className="add-iso-field">
+          <span className="add-iso-label">Muaji</span>
+          <select value={muaji} onChange={(e) => setMuaji(Number(e.target.value))}>
+            {MONTHS_SQ_FULL.map((m) => (
+              <option key={m.v} value={m.v}>{m.l}</option>
+            ))}
+          </select>
+        </label>
+        <label className="add-iso-field">
+          <span className="add-iso-label">Viti</span>
+          <select value={viti} onChange={(e) => setViti(Number(e.target.value))}>
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className={'add-iso-upload' + (file ? ' is-filled' : '')}>
+        <div className="add-iso-upload-icon">
+          <span className="material-icons">{file ? 'description' : 'upload_file'}</span>
+        </div>
+        <div>
+          <div className="add-iso-upload-title">
+            {file ? file.name : `Ngarko listëpagesën — ${periudha}`}
+          </div>
+          <div className="add-iso-upload-hint">PDF, deri 20 MB</div>
+        </div>
+        {file
+          ? <button className="add-iso-upload-btn" type="button" onClick={() => setFile(null)}>Hiq</button>
+          : <button className="add-iso-upload-btn" type="button"
+                    onClick={() => setFile({ name: safeName, size: '240 KB' })}>Zgjidh</button>}
+      </div>
+    </div>
+  );
+}
+
 function LangOpt({ l, active, onPick }) {
   return (
     <button
@@ -711,6 +786,8 @@ function AddIsoDrawer({ open, onClose, onSave, kind = 'iso', saveToProfileToggle
     work:    { title: 'punë të ngjashme',   subtitle: 'Të dhënat e kontratës së ngjashme të realizuar.',         nameLabel: 'Emri i kontratës',    namePh: 'p.sh. Rikonstruksion rruga Elbasan' },
     catalog: { title: 'katalog / autorizim', subtitle: 'Ngarko PDF-in. Përkthimet në gjuhë të tjera gjenerohen me AI.', nameLabel: 'Emri i dokumentit', namePh: 'p.sh. Katalog teknik — Pompa uji' },
     license: { title: 'licencë',             subtitle: 'Licenca profesionale dhe data e vlefshmërisë.',          nameLabel: 'Emri i licencës',     namePh: 'p.sh. Licencë ndërtimi — NP-4A' },
+    payroll: { title: 'listëpagesë',          subtitle: 'Zgjidh muajin dhe vitin, pastaj ngarko PDF-in e listëpagesës.', nameLabel: '', namePh: '' },
+    'doc-generic': { title: 'dokument',       subtitle: 'Emërto dokumentin, vendos datat dhe ngarko PDF-in.',        nameLabel: 'Emri i dokumentit',  namePh: 'p.sh. Deklarata e datës 12/03/2026' },
   }[kind] || { title: '', subtitle: '', nameLabel: 'Emri', namePh: '' };
   const config = {
     ...baseConfig,
@@ -764,7 +841,9 @@ function AddIsoDrawer({ open, onClose, onSave, kind = 'iso', saveToProfileToggle
             ? <StaffForm onCancel={onClose} onChange={receive} initial={initial} />
             : kind === 'machine'
               ? <MachineForm onChange={receive} initial={initial} />
-              : <SimpleForm kind={kind} nameLabel={config.nameLabel} namePh={config.namePh} onChange={receive} initial={initial} />}
+              : kind === 'payroll'
+                ? <PayrollForm onChange={receive} initial={initial} />
+                : <SimpleForm kind={kind} nameLabel={config.nameLabel} namePh={config.namePh} onChange={receive} initial={initial} />}
         </div>
 
         <footer className="add-doc-foot">
