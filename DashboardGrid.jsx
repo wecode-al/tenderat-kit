@@ -100,11 +100,19 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
     return r;
   }, [allRows, filter, query, sort]);
 
+  const [active, setActive] = React.useState(() => rows[0] || null);
+
+  React.useEffect(() => {
+    if (rows.length === 0) { setActive(null); return; }
+    if (!active || !rows.some((r) => r.id === active.id)) setActive(rows[0]);
+  }, [filter, query, rows.length]);
+
+  const DetailInline = (typeof window !== 'undefined' && window.DossierDetailInline) || null;
+
   return (
     <>
       <AppHeader active="dosjet" onNav={onNav} />
       <div className="t-page" style={{ padding: '20px 0px 64px' }}>
-        {/* Heading */}
         <div className="t-page-heading">
           <div>
             <h1 className="t-page-title">Dosjet e Mia</h1>
@@ -112,9 +120,8 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
           </div>
         </div>
 
-        {/* Toolbar */}
-        <div className="t-grid-toolbar">
-          <div className="t-search-row">
+        <div className="t-dash-shell">
+          <aside className="t-dash-rail">
             <div className="t-filter-row">
               {FILTERS.map(f => (
                 <button
@@ -130,6 +137,7 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
                 </button>
               ))}
             </div>
+
             <div className="t-search">
               <span className="material-icons">search</span>
               <input
@@ -144,45 +152,58 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
                 </button>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Grid */}
-        {rows.length === 0 ? (
-          <div className="t-grid-empty">
-            <span className="material-icons">search_off</span>
-            <div>
-              <h3>Asnjë dosje nuk përputhet</h3>
-              <p>Provo të pastrosh kërkimin ose ndrysho filtrin.</p>
-            </div>
-            <button className="t-btn t-btn-outline" onClick={() => { setQuery(''); setFilter('all'); }}>
-              Rivendos filtrat
+            <button type="button" className="t-dash-rail-create" onClick={onCreate}>
+              <span className="material-icons">add</span>
+              <span>Krijo dosje të re</span>
             </button>
-          </div>
-        ) : (
-          <div className="t-dossier-grid">
-            <DossierCardEmpty onClick={onCreate} />
-            {rows.map((d) => (
-              <DossierCard
-                key={d.id}
-                title={d.title}
-                authority={d.authority}
-                reference={d.reference}
-                statusKey={d.statusKey}
-                statusLabel={d.statusLabel}
-                fondi={d.fondi}
-                closingDate={d.closingDate}
-                daysLeft={d.daysLeft}
-                docsDone={d.docsDone}
-                docsTotal={d.docsTotal}
-                createdAt={d.createdAt}
-                onOpen={() => onOpen && onOpen(d)}
-                onEdit={() => onOpen && onOpen(d)}
-                onDelete={() => setRemoved(prev => new Set(prev).add(d.id))}
-              />
-            ))}
-          </div>
-        )}
+
+            {rows.length === 0 ? (
+              <div className="t-dash-rail-empty">
+                <span className="material-icons">search_off</span>
+                <p>Asnjë dosje nuk përputhet</p>
+                <button className="t-btn t-btn-outline" onClick={() => { setQuery(''); setFilter('all'); }}>
+                  Rivendos filtrat
+                </button>
+              </div>
+            ) : (
+              <div className="t-dash-raillist">
+                {rows.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    className={'t-dash-rrow is-' + d.statusKey + (active && active.id === d.id ? ' is-on' : '')}
+                    onClick={() => setActive(d)}>
+                    <span className="t-dash-rrow-dot" />
+                    <span className="t-dash-rrow-body">
+                      <span className="t-dash-rrow-title">{d.title}</span>
+                      <span className="t-dash-rrow-sub">{d.authority} · {d.reference}</span>
+                    </span>
+                    <span className="t-dash-rrow-date">{d.closingDate}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </aside>
+
+          <section className="t-dash-work">
+            {active && DetailInline ? (
+              <DetailInline key={active.id} dossier={active} embedded={true} />
+            ) : (
+              <div className="t-dash-empty-right">
+                <span className="material-icons">folder_open</span>
+                <div>
+                  <h3>Zgjidh një dosje</h3>
+                  <p>Zgjidh një dosje nga lista për ta hapur këtu, ose krijo një të re.</p>
+                </div>
+                <button className="t-btn t-btn-primary" onClick={onCreate}>
+                  <span className="material-icons">add</span>
+                  Krijo dosje të re
+                </button>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </>
   );

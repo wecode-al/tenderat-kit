@@ -75,6 +75,12 @@ function DocRow({ doc, onDelete }) {
         <span className="d-doc-name">{doc.name}</span>
         <span className="d-doc-meta">{doc.meta}</span>
       </div>
+      <button className="d-doc-action" title="Shiko dokumentin">
+        <span className="material-icons">visibility</span>
+      </button>
+      <button className="d-doc-action" title="Ndrysho">
+        <span className="material-icons">edit</span>
+      </button>
       <button className="d-doc-action" title="Shkarko">
         <span className="material-icons">download</span>
       </button>
@@ -109,11 +115,11 @@ function ConfirmModal({ open, title, body, confirmLabel = 'Fshi', onCancel, onCo
 }
 window.ConfirmModal = ConfirmModal;
 
-function DossierDetail({ dossier, onBack, onNav }) {
+function DossierDetailInline({ dossier, embedded = false }) {
   const d = dossier || { title: 'Ndërtimi - Rruga 4', count: 15 };
   const [addOpen, setAddOpen] = React.useState(false);
-  const [deletingDoc, setDeletingDoc] = React.useState(null); // { gi, di, name }
-  const [removed, setRemoved] = React.useState(() => new Set()); // "gi:di"
+  const [deletingDoc, setDeletingDoc] = React.useState(null);
+  const [removed, setRemoved] = React.useState(() => new Set());
 
   const visibleGroups = DOC_GROUPS.map((g, gi) => ({
     ...g,
@@ -123,82 +129,71 @@ function DossierDetail({ dossier, onBack, onNav }) {
 
   return (
     <>
-      <AppHeader active="dosjet" onNav={onNav} />
-      <div className="d-page" style={{ padding: '20px 0px 80px' }}>
-        {/* Breadcrumb */}
-        <button className="t-back" onClick={onBack}>
-          <span className="material-icons">arrow_back</span> Dosjet e Mia
-        </button>
-
-        {/* Hero */}
-        <section className="d-hero">
-          <div className="d-hero-left">
-            <div className="d-hero-row">
-              <span className="d-ref">REF-2026-0471</span>
-            </div>
-            <h1 className="d-hero-title">{d.title}</h1>
+      <section className={'d-hero' + (embedded ? ' d-hero-embedded' : '')}>
+        <div className="d-hero-left">
+          <div className="d-hero-row">
+            <span className="d-ref">{d.reference || 'REF-2026-0471'}</span>
           </div>
-          <div className="d-hero-right">
-            <div className="d-hero-actions">
-              <OutlineButton icon="edit">Ndrysho</OutlineButton>
-              <MuiButton icon="download">Shkarko dosjen</MuiButton>
-            </div>
-          </div>
-        </section>
-
-        {/* Fact tiles */}
-        <section className="d-facts">
-          <FactTile icon="account_balance" label="Autoriteti kontraktor"        value="Bashkia Tiranë" />
-          <FactTile icon="payments"        label="Fondi limit"                  value="12 400 000 ALL" accent />
-          <FactTile icon="tag"             label="Referenca"                    value="REF-2026-0118" />
-          <FactTile icon="gavel"           label="Procedura"                    value="Procedurë e hapur" />
-          <FactTile icon="description"     label="Lloji i kontratës"            value="Punë" />
-          <FactTile icon="groups"          label="Lloji i dosjes së pjesëmarrjes" value="Mbështetje në kapacitetet e të tjerëve" wide />
-          <FactTile icon="event"           label="Grafiku i autoritetit"        value="20/01/2026 – 30/06/2026" />
-          <FactTile icon="label"           label="Nr. reference i autoritetit"  value="AK-2026-118" />
-          <FactTile icon="shield"          label="Garancia e objektit"          value="240 000 ALL" />
-          <FactTile icon="event_available" label="Data e mbylljes së procedurës" value="30/06/2026" />
-          <FactTile icon="schedule"        label="Ora e mbylljes së procedurës"  value="14:00" />
-        </section>
-
-        {/* Toolbar */}
-        <div className="d-tabs">
-          <div className="d-tabs-title">
-            <span>Dokumentacioni</span>
-            <span className="d-tab-count">{total}</span>
-          </div>
-          <div className="d-tabs-spacer" />
-          <OutlineButton icon="add" onClick={() => setAddOpen(true)}>Shto dokument</OutlineButton>
+          <h1 className="d-hero-title">{d.title}</h1>
         </div>
-
-        <div className="d-groups">
-          {visibleGroups.map((g, gi) => (
-            g.docs.length === 0 ? null : (
-              <section key={gi} className="d-group">
-                <header className="d-group-head">
-                  <h3>{g.title}</h3>
-                  <span className="d-group-count">{g.docs.length}</span>
-                </header>
-                <div className="d-group-body">
-                  {g.docs.map((doc, di) => (
-                    <DocRow
-                      key={gi + ':' + doc.name + ':' + di}
-                      doc={doc}
-                      onDelete={() => {
-                        // Translate filtered index back to original
-                        const origIndex = DOC_GROUPS[gi].docs.findIndex(
-                          (d2, k) => d2.name === doc.name && !removed.has(gi + ':' + k)
-                        );
-                        setDeletingDoc({ gi, di: origIndex, name: doc.name });
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            )
-          ))}
+        <div className="d-hero-right">
+          <div className="d-hero-actions">
+            <OutlineButton icon="edit">Ndrysho</OutlineButton>
+            <MuiButton icon="download">Shkarko dosjen</MuiButton>
+          </div>
         </div>
+      </section>
+
+      <section className="d-facts">
+        <FactTile icon="account_balance" label="Autoriteti kontraktor"        value={d.authority || 'Bashkia Tiranë'} />
+        <FactTile icon="payments"        label="Fondi limit"                  value={d.fondi || '12 400 000 ALL'} accent />
+        <FactTile icon="tag"             label="Referenca"                    value={d.reference || 'REF-2026-0118'} />
+        <FactTile icon="gavel"           label="Procedura"                    value="Procedurë e hapur" />
+        <FactTile icon="description"     label="Lloji i kontratës"            value="Punë" />
+        <FactTile icon="groups"          label="Lloji i dosjes së pjesëmarrjes" value="Mbështetje në kapacitetet e të tjerëve" wide />
+        <FactTile icon="event"           label="Grafiku i autoritetit"        value="20/01/2026 – 30/06/2026" />
+        <FactTile icon="label"           label="Nr. reference i autoritetit"  value="AK-2026-118" />
+        <FactTile icon="shield"          label="Garancia e objektit"          value="240 000 ALL" />
+        <FactTile icon="event_available" label="Data e mbylljes së procedurës" value={d.closingDate || '30/06/2026'} />
+        <FactTile icon="schedule"        label="Ora e mbylljes së procedurës"  value="14:00" />
+      </section>
+
+      <div className="d-tabs">
+        <div className="d-tabs-title">
+          <span>Dokumentacioni</span>
+          <span className="d-tab-count">{total}</span>
+        </div>
+        <div className="d-tabs-spacer" />
+        <OutlineButton icon="add" onClick={() => setAddOpen(true)}>Shto dokument</OutlineButton>
       </div>
+
+      <div className="d-groups">
+        {visibleGroups.map((g, gi) => (
+          g.docs.length === 0 ? null : (
+            <section key={gi} className="d-group">
+              <header className="d-group-head">
+                <h3>{g.title}</h3>
+                <span className="d-group-count">{g.docs.length}</span>
+              </header>
+              <div className="d-group-body">
+                {g.docs.map((doc, di) => (
+                  <DocRow
+                    key={gi + ':' + doc.name + ':' + di}
+                    doc={doc}
+                    onDelete={() => {
+                      const origIndex = DOC_GROUPS[gi].docs.findIndex(
+                        (d2, k) => d2.name === doc.name && !removed.has(gi + ':' + k)
+                      );
+                      setDeletingDoc({ gi, di: origIndex, name: doc.name });
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        ))}
+      </div>
+
       <AddDocumentDrawer open={addOpen} onClose={() => setAddOpen(false)} />
       <ConfirmModal
         open={!!deletingDoc}
@@ -212,6 +207,21 @@ function DossierDetail({ dossier, onBack, onNav }) {
           setDeletingDoc(null);
         }}
       />
+    </>
+  );
+}
+window.DossierDetailInline = DossierDetailInline;
+
+function DossierDetail({ dossier, onBack, onNav }) {
+  return (
+    <>
+      <AppHeader active="dosjet" onNav={onNav} />
+      <div className="d-page" style={{ padding: '20px 0px 80px' }}>
+        <button className="t-back" onClick={onBack}>
+          <span className="material-icons">arrow_back</span> Dosjet e Mia
+        </button>
+        <DossierDetailInline dossier={dossier} />
+      </div>
     </>
   );
 }

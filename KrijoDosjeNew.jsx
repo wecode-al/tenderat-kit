@@ -467,6 +467,14 @@ function CapacityLists({ data, onOpen, onRemove, onEdit, staffHint, machineryHin
             onPick={() => extras.onPickDoc && extras.onPickDoc('xhiro', 'Xhiro_vjetore')}
             onClear={() => extras.onClearDoc && extras.onClearDoc('xhiro')}
           />
+          <CapSingleDoc
+            title="Dokument tjetër"
+            hint="Ngarko një dokument shtesë që mbështet ofertën."
+            icon="attach_file"
+            file={data.docExtra || null}
+            onPick={() => extras.onPickDoc && extras.onPickDoc('docExtra', 'Dokument_shtese')}
+            onClear={() => extras.onClearDoc && extras.onClearDoc('docExtra')}
+          />
         </>
       )}
     </div>
@@ -772,7 +780,7 @@ function Bashkimi({ form, setConsortium }) {
         linkSent: false, shareLink: '',
         capacities: {
           staff: [], machinery: [], certificates: [], licenses: [],
-          similarWorks: [], listpagesa: [], xhiro: null,
+          similarWorks: [], listpagesa: [], xhiro: null, docExtra: null,
         },
       },
     ]);
@@ -2514,17 +2522,6 @@ function DeklarimetStep({ form, setForm }) {
           </ul>
         )}
 
-        <div className="k-dek-reuse">
-          <span className="material-icons">auto_awesome</span>
-          <div>
-            <strong>Dokumentet e hapave të mëparshëm përdoren automatikisht</strong>
-            <p>
-              Sistemi merr parasysh ISO-t, punët e ngjashme, CV-të e stafit, makineritë e
-              deklaruara dhe preventivin që keni plotësuar për të gjeneruar një metodologji
-              të personalizuar.
-            </p>
-          </div>
-        </div>
       </Section>
     </div>
   );
@@ -2621,21 +2618,6 @@ function MetodologjiaGenerator({ form, setForm, selectedDocs }) {
   if (!generated && step !== 'thinking' && step !== 'writing') {
     return (
       <div className="k-meto">
-        <header className="k-meto-hero">
-          <div className="k-meto-hero-ico">
-            <span className="material-icons">auto_awesome</span>
-          </div>
-          <div>
-            <div className="k-meto-eyebrow">Gjenerim me AI</div>
-            <h3>Gjenero metodologjinë për këtë dosje</h3>
-            <p>
-              Sistemi kombinon të dhënat e dosjes, preventivin, dokumentet e përzgjedhura
-              dhe deklarimet e hapit të kaluar për të prodhuar një metodologji të
-              personalizuar për <b>{inputs.basics.objekti}</b>.
-            </p>
-          </div>
-        </header>
-
         <div className="k-meto-ingredients">
           <div className="k-meto-ing-head">
             <span className="material-icons">inventory_2</span>
@@ -2651,8 +2633,21 @@ function MetodologjiaGenerator({ form, setForm, selectedDocs }) {
               value={`${inputs.preventivi} zëra të plotësuara`} />
             <IngredientRow icon="groups" label="Stafi & makineritë"
               value={`${inputs.staff} staf · ${inputs.machinery} makineri`} />
-            <IngredientRow icon="folder_open" label="Dokumentet e përzgjedhura"
-              value={`${inputs.docs.length} dokumente`} />
+            <li className="k-meto-ing-row is-stacked">
+              <span className="material-icons">folder_open</span>
+              <span className="k-meto-ing-label">Dokumentet e përzgjedhura</span>
+              <span className="k-meto-ing-value">{inputs.docs.length} dokumente</span>
+              {inputs.docs.length > 0 && (
+                <ul className="k-meto-ing-sub">
+                  {inputs.docs.map((name, i) => (
+                    <li key={i}>
+                      <span className="material-icons">description</span>
+                      <span>{name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
             {inputs.extras > 0 && (
               <IngredientRow icon="attachment" label="Dokumente shtesë"
                 value={`${inputs.extras} të ngarkuara në hapin e mëparshëm`} />
@@ -2662,11 +2657,8 @@ function MetodologjiaGenerator({ form, setForm, selectedDocs }) {
 
         <button type="button" className="k-meto-gen-btn" onClick={generate}>
           <span className="material-icons">auto_awesome</span>
-          Gjenero metodologjinë me AI
+          Gjenero metodologjinë
         </button>
-        <p className="k-meto-foot">
-          Gjenerimi merr ~10–15 sekonda. Mund ta rigjenerosh ose ta redaktosh më pas.
-        </p>
       </div>
     );
   }
@@ -2961,7 +2953,6 @@ function PreventiviUpload({ form, setForm }) {
       <ul className="k-prev-tips">
         <li><span className="material-icons">bolt</span> Sistemi mbush automatikisht çmimet për kodet që njeh nga manuali.</li>
         <li><span className="material-icons">edit_note</span> Ju mund ta mbishkruani çdo çmim sipas ofertës suaj.</li>
-        <li><span className="material-icons">verified</span> Totali dhe TVSH llogariten dhe ripërtërihen automatikisht.</li>
       </ul>
     </div>
   );
@@ -3540,6 +3531,7 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
       similarWorks: [],      // Punë të ngjashme — multi, uses `work` drawer kind
       listpagesa: [],      // Listëpagesa — 1 doc { name, size }
       xhiro: null,           // Xhiro vjetore — 1 doc { name, size }
+      docExtra: null,        // Dokument tjetër — 1 doc { name, size }
       emailStatus: null,     // null | 'sent' — email kërkese u dërgua
       emailVerified: false,  // Email kontakti u konfirmua nga kompania mbështetëse
       emailVerifySent: false,// Kodi i verifikimit u dërgua në email
@@ -3563,7 +3555,7 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
           shareLink: '',
           capacities: {
             staff: [], machinery: [], certificates: [], licenses: [],
-            similarWorks: [], listpagesa: [], xhiro: null,
+            similarWorks: [], listpagesa: [], xhiro: null, docExtra: null,
           },
         },
       ],

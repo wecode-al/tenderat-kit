@@ -103,6 +103,7 @@ function PartnerFillScreen({ invite, onDone }) {
     similarWorks: [],     // "Punë të ngjashme" — multiple entries (work kind)
     listpagesa: [],       // 1 ose më shumë muaj: [{ periudha, name, size }]
     xhiro: null,          // one doc — { name }
+    docExtra: null,       // one doc — { name }
   });
   const [drawerKind, setDrawerKind] = React.useState(null);
   const [editIndex, setEditIndex] = React.useState(-1);

@@ -2178,10 +2178,6 @@ button.k-vd-toggle-opt.is-on {
 }
 .k-doc-check.is-locked { cursor: not-allowed; }
 
-/* Përkohësisht fshihen rreshtat e dokumenteve të sistemit nga lista e zgjedhjes.
-   Për ta rikthyer: hiq këtë rregull. */
-.k-doc-row.is-system { display: none; }
-
 /* ---------- Manuali i çmimeve (system viewer) ---------- */
 .k-doc-preview-body.is-prev {
   background: var(--t-white);
@@ -3878,6 +3874,40 @@ button.k-prev-file-btn .material-icons { font-size: 14px; }
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+/* Sub-list for selected documents under "Dokumentet e përzgjedhura" */
+.k-meto-ing-row.is-stacked {
+  grid-template-columns: 28px 1fr auto;
+  grid-template-areas:
+    "icon label value"
+    "sub  sub   sub";
+  row-gap: 8px;
+}
+.k-meto-ing-row.is-stacked > .material-icons { grid-area: icon; }
+.k-meto-ing-row.is-stacked > .k-meto-ing-label { grid-area: label; }
+.k-meto-ing-row.is-stacked > .k-meto-ing-value { grid-area: value; }
+.k-meto-ing-sub {
+  grid-area: sub;
+  margin: 0;
+  padding: 8px 0 2px 40px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px dashed var(--t-border-100, #EEF2F6);
+  padding-top: 10px;
+}
+.k-meto-ing-sub li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--t-fg-2);
+  font: 12px/1.3 var(--t-font-ui);
+}
+.k-meto-ing-sub .material-icons {
+  font-size: 14px;
+  color: #6366F1;
 }
 
 /* Generate button */

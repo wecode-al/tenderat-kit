@@ -455,7 +455,7 @@ function FirstLogin({ onDone }) {
 
   return (
     <div className="fl-root">
-      <AppHeader active={null} onNav={() => {}} />
+      <AppHeader active={null} onNav={() => {}} showNav={false} />
       <div className="fl-wrap" style={{ padding: '20px 0px 80px' }}>
         <FLRail current={step} done={done} summary={summary} onJump={goto} />
         <main className="fl-main">

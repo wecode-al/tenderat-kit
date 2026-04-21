@@ -1,5 +1,5 @@
 // Top app header — logo, nav, notifications bell, user.
-function AppHeader({ active = 'dosjet', onNav }) {
+function AppHeader({ active = 'dosjet', onNav, showNav = true }) {
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const userRef = React.useRef(null);
@@ -44,10 +44,12 @@ function AppHeader({ active = 'dosjet', onNav }) {
             <span className="t-logo-mark" aria-hidden>T</span>
             <span className="t-logo-word">Tenderat</span>
           </div>
-          <nav className="t-nav">
-            {chip('dosjet', 'folder_open', 'Dosjet e mia')}
-            {chip('profili', 'business', 'Profili i kompanisë')}
-          </nav>
+          {showNav && (
+            <nav className="t-nav">
+              {chip('dosjet', 'folder_open', 'Dosjet e mia')}
+              {chip('profili', 'business', 'Profili i kompanisë')}
+            </nav>
+          )}
         </div>
 
         <div className="t-header-right">
