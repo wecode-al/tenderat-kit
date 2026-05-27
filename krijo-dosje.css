@@ -4128,3 +4128,326 @@ button.k-prev-file-btn .material-icons { font-size: 14px; }
   color: var(--t-fg-1);
   font-weight: 600;
 }
+
+/* ============================================================
+   Preventivi — ndarja sipas kompanive (Bashkim Operatorësh)
+   + validimi i zërave pa çmim
+   ============================================================ */
+
+/* Pika me ngjyrën e partnerit (variabël --pc) */
+.k-pe-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--pc, #999);
+  flex: none;
+  display: inline-block;
+}
+
+/* --- Filtra sipas kompanisë + alarmi "pa çmim" --- */
+.k-pe-filter.is-alert b { color: #B42318; }
+.k-pe-filter.is-alert {
+  background: #FDE7E7;
+  color: #B42318;
+}
+.k-pe-filter-partner { gap: 6px; }
+.k-pe-filter-partner .k-pe-dot { background: var(--pc); }
+
+/* --- Banner-at (pa çmim + ndarja AI) --- */
+.k-pe-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  background: var(--t-white);
+  flex: none;
+}
+.k-pe-banner > .material-icons { font-size: 22px; flex: none; }
+.k-pe-banner-txt { flex: 1; min-width: 0; font: 12.5px/1.5 var(--t-font-ui); color: var(--t-fg-2); }
+.k-pe-banner-txt strong { color: var(--t-fg-1); font-weight: 700; }
+.k-pe-banner.is-alert { border-color: #F4C7C3; background: #FEF3F2; }
+.k-pe-banner.is-alert > .material-icons { color: #B42318; }
+.k-pe-banner.is-ai { border-color: #E2D6FB; background: #F8F4FF; }
+.k-pe-banner.is-ai > .material-icons { color: #7C3AED; }
+
+.k-pe-banner-btn {
+  flex: none;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  background: var(--t-white);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: 600 12.5px/1 var(--t-font-ui);
+  color: var(--t-fg-1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.k-pe-banner-btn:hover { background: var(--t-bg, #F1F5F9); }
+.k-pe-banner-btn .material-icons { font-size: 16px; }
+.k-pe-banner.is-alert .k-pe-banner-btn { border-color: #F4C7C3; color: #B42318; }
+
+.k-pe-balance { display: inline-flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
+.k-pe-balance-item { display: inline-flex; align-items: center; gap: 5px; }
+.k-pe-balance-item b { color: var(--t-fg-1); font-variant-numeric: tabular-nums; }
+.k-pe-balance-item em { font-style: normal; color: var(--t-fg-2); opacity: 0.8; }
+
+/* --- Kolona "Kompania" te tabela --- */
+.k-pe-td-company { white-space: nowrap; }
+.k-pe-company { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.k-pe-company-empty { color: var(--t-fg-2); }
+.k-pe-company-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font: 600 11.5px/1 var(--t-font-ui);
+  color: var(--t-fg-1);
+  background: color-mix(in srgb, var(--pc) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--pc) 30%, white);
+}
+.k-pe-company.is-split .k-pe-company-badge { font-size: 11px; padding: 3px 7px; }
+
+/* Rresht pa çmim — theks i lehtë */
+.k-pe-data-row.is-unpriced td { background: #FEF6F5; }
+.k-pe-data-row.is-unpriced.is-active td { background: #FDECEA; }
+
+/* --- Inspektor: alarmi pa çmim + caktimi te kompania --- */
+.k-pe-inspector.is-unpriced { border-color: #F4C7C3; }
+.k-pe-insp-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #FEF3F2;
+  border: 1px solid #F4C7C3;
+  font: 12px/1.45 var(--t-font-ui);
+  color: #B42318;
+}
+.k-pe-insp-alert .material-icons { font-size: 18px; flex: none; }
+.k-pe-insp-price.is-empty {
+  border-color: #E0794F;
+  box-shadow: 0 0 0 3px rgba(224,121,79,0.12);
+}
+
+.k-pe-insp-assign {
+  border-top: 1px dashed var(--t-border-200, #E2E8F0);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.k-pe-insp-assign-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 13px/1 var(--t-font-ui);
+  color: var(--t-fg-1);
+}
+.k-pe-insp-assign-head .material-icons { font-size: 18px; color: var(--t-fg-2); }
+.k-pe-insp-aitag {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #F3ECFF;
+  color: #7C3AED;
+  font: 700 10.5px/1 var(--t-font-ui);
+  letter-spacing: 0.4px;
+}
+.k-pe-insp-aitag .material-icons { font-size: 13px !important; }
+.k-pe-insp-reason {
+  margin: 0;
+  font: 12px/1.5 var(--t-font-ui);
+  color: var(--t-fg-2);
+  background: var(--t-bg, #F8FAFC);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.k-pe-insp-modetabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  border-radius: 10px;
+  background: var(--t-bg, #F8FAFC);
+}
+.k-pe-insp-modetabs button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font: 600 12.5px/1 var(--t-font-ui);
+  color: var(--t-fg-2);
+  cursor: pointer;
+}
+.k-pe-insp-modetabs button.is-on {
+  background: var(--t-white);
+  color: var(--t-fg-1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.k-pe-insp-modetabs button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.k-pe-insp-select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  border-radius: 8px;
+  font: 13px/1 var(--t-font-ui);
+  color: var(--t-fg-1);
+  background: var(--t-white);
+}
+
+.k-pe-insp-split { display: flex; flex-direction: column; gap: 8px; }
+.k-pe-insp-split-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.k-pe-insp-split-row > select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  border-radius: 8px;
+  font: 12.5px/1 var(--t-font-ui);
+  color: var(--t-fg-1);
+  background: var(--t-white);
+}
+.k-pe-insp-split-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  border-radius: 8px;
+  padding: 0 8px 0 6px;
+  background: var(--t-white);
+}
+.k-pe-insp-split-pct input {
+  width: 46px;
+  border: 0;
+  padding: 8px 2px;
+  font: 600 12.5px/1 var(--t-font-ui);
+  text-align: right;
+  color: var(--t-fg-1);
+  background: transparent;
+  -moz-appearance: textfield;
+}
+.k-pe-insp-split-pct input::-webkit-outer-spin-button,
+.k-pe-insp-split-pct input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.k-pe-insp-split-pct span { color: var(--t-fg-2); font: 12px/1 var(--t-font-ui); }
+.k-pe-insp-split-x {
+  border: 0; background: transparent; cursor: pointer;
+  width: 26px; height: 26px; border-radius: 7px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--t-fg-2);
+}
+.k-pe-insp-split-x:hover { background: #FEF3F2; color: #B42318; }
+.k-pe-insp-split-x .material-icons { font-size: 16px; }
+
+.k-pe-insp-split-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.k-pe-insp-split-add {
+  border: 1px dashed var(--t-border-200, #CBD5E1);
+  background: transparent;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: 600 12px/1 var(--t-font-ui);
+  color: var(--t-fg-2);
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.k-pe-insp-split-add:hover { color: var(--t-fg-1); border-color: var(--t-fg-2); }
+.k-pe-insp-split-add .material-icons { font-size: 15px; }
+.k-pe-insp-split-total {
+  font: 700 12px/1 var(--t-font-ui);
+  font-variant-numeric: tabular-nums;
+  padding: 5px 9px;
+  border-radius: 999px;
+}
+.k-pe-insp-split-total.is-ok  { background: #E6F7EC; color: #1B7F3A; }
+.k-pe-insp-split-total.is-bad { background: #FFF4D6; color: #9A6A00; }
+
+/* --- Totalet për secilën kompani (bashkim operatorësh) --- */
+.k-pe-totals-by {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.k-pe-ptotal {
+  flex: 1 1 180px;
+  min-width: 160px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  border-left: 3px solid var(--pc, #999);
+  border-radius: 10px;
+  background: var(--t-white);
+  padding: 10px 12px;
+}
+.k-pe-ptotal.is-combined {
+  border-left-color: var(--t-fg-2, #64748B);
+  background: var(--t-bg, #F8FAFC);
+}
+.k-pe-ptotal-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12.5px/1.2 var(--t-font-ui);
+  color: var(--t-fg-1);
+  margin-bottom: 8px;
+}
+.k-pe-ptotal-head .material-icons { font-size: 15px; color: var(--t-fg-2); }
+.k-pe-ptotal-rows {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 10px;
+  font: 12px/1.3 var(--t-font-ui);
+  color: var(--t-fg-2);
+}
+.k-pe-ptotal-rows b {
+  text-align: right;
+  color: var(--t-fg-1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.k-pe-ptotal-rows .is-total { font-weight: 700; color: var(--t-fg-1); padding-top: 3px; }
+.k-pe-ptotal-rows b.is-total { font-size: 13px; }
+
+/* Gabim ngarkimi i preventivit (mos dështo në heshtje) */
+.k-prev-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #FEF3F2;
+  border: 1px solid #F4C7C3;
+  font: 12.5px/1.45 var(--t-font-ui);
+  color: #B42318;
+}
+.k-prev-error .material-icons { font-size: 18px; flex: none; }
+
+/* --- Hint te footer kur bllokohet kalimi --- */
+.k-footer-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12.5px/1 var(--t-font-ui);
+  color: #B42318;
+  margin-right: 4px;
+}
+.k-footer-block .material-icons { font-size: 17px; }

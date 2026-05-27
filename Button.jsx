@@ -4,10 +4,15 @@
 // 2) <PrimaryButton> — filled orange, Inter 700, uppercase 14, 8px radius, flat.
 //    Used for: the login "IDENTIFIKOHU" button.
 // 3) <OutlineButton> — white surface, 1px border, Inter 500.
-function MuiButton({ icon, children, onClick, variant = 'primary' }) {
+function MuiButton({ icon, children, onClick, variant = 'primary', disabled = false, title }) {
   const bg = variant === 'danger' ? '#C62828' : '#FF8400';
   return (
-    <button className="t-btn-mui" onClick={onClick} style={{ background: bg }}>
+    <button
+      className={'t-btn-mui' + (disabled ? ' is-disabled' : '')}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      title={title}
+      style={{ background: disabled ? '#D8D8D8' : bg, cursor: disabled ? 'not-allowed' : 'pointer' }}>
       {icon && <span className="material-icons">{icon}</span>}
       {children}
     </button>

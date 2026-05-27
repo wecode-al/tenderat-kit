@@ -6,6 +6,7 @@
     { "nr": 1, "kodi": "3.89/a",  "emertimi": "Germim dheu me ekskavator goma 0.25 m³, ne kanale gjeresi deri 2 m, toke zak, kategoria III, me shk ne mjet (Germim trupi rruges, skarpata, K.U.B, kanale)", "njesia": "m3", "sasia": 9000 },
     { "nr": 2, "kodi": "2.47/an", "emertimi": "Germim shkembi mesatar me çekiç me ekskavator me zinxhir (Muret prites)", "njesia": "m3", "sasia": 1900 },
     { "nr": 3, "kodi": "2.37/5a", "emertimi": "Transport materiale ndertimi, dheu me auto deri 5.0km",                    "njesia": "m3", "sasia": 10900 },
+    { "nr": 4, "kodi": "Kontr. e ngj.", "emertimi": "Raporti gjeologjik, studimi sizmik i tokes", "njesia": "lot", "sasia": 1 },
 
     { "sectionNr": 2, "sectionTitle": "PUNIME SHTRESASH" },
     { "nr": 1, "kodi": "3.164/1b", "emertimi": "Mbushje me cakell e gur gurore ne trupin e rruges, perhapur e ngjeshur me makineri (Drenazhim P.86-P.102, Rreg. Nivelete, Mbushje Tombino, Mbushje KUB, Mbushje tub300)", "njesia": "m3", "sasia": 3572 },

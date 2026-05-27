@@ -1869,6 +1869,17 @@ function formatCurrency(n) {
   return num.toLocaleString('sq-AL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Paletë e qëndrueshme ngjyrash për partnerët e bashkimit (sipas indeksit).
+const PARTNER_COLORS = ['#E8772E', '#2563EB', '#0F9D58', '#9333EA', '#DB2777', '#0891B2'];
+function partnerColor(idx) {
+  return PARTNER_COLORS[((idx % PARTNER_COLORS.length) + PARTNER_COLORS.length) % PARTNER_COLORS.length];
+}
+// Emër i shkurtër partneri për badge (heq formën ligjore SH.P.K. etj.).
+function partnerShortName(p) {
+  const n = (p && p.name) || (p && p.isSelf ? 'Kompania ime' : 'Partneri');
+  return String(n).replace(/\s*(sh\.?p\.?k\.?|sh\.?a\.?|ltd\.?)\s*$/i, '').trim() || n;
+}
+
 // Shared loader for the construction manual — cached in module scope so the
 // Preventivi editor and the Manual viewer don't double-fetch.
 let __manualDataCache = null;
@@ -2839,6 +2850,7 @@ function PreventiviUpload({ form, setForm }) {
   const file = form.preventivi?.file || null;
   const rows = form.preventivi?.rows || [];
   const inputRef = React.useRef(null);
+  const [loadErr, setLoadErr] = React.useState(null);
   const { data: manualData, error: manualErr } = useManualData();
 
   const setPrev = (patch) =>
@@ -2846,13 +2858,18 @@ function PreventiviUpload({ form, setForm }) {
 
   // First upload — parse sample + auto-match once manual data is ready.
   const loadSample = React.useCallback((descriptor) => {
+    setLoadErr(null);
     fetch('preventivi-sample.json')
       .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
       .then((sample) => {
         const flat = flattenPreventivi(sample);
         setPrev({ file: descriptor, rows: flat, autoFilledAt: null, sample });
       })
-      .catch(() => { setPrev({ file: descriptor }); });
+      .catch((e) => {
+        // Mos dështo në heshtje — trego userit pse "nuk hapet gjë".
+        setLoadErr('S\'u ngarkua preventivi (' + (e && e.message ? e.message : 'gabim rrjeti') +
+          '). Sigurohu që faqja po shërbehet me HTTP dhe provo sërish.');
+      });
   }, []); // eslint-disable-line
 
   // Once we have both rows + manualData, run auto-match if rows are un-priced.
@@ -2907,6 +2924,7 @@ function PreventiviUpload({ form, setForm }) {
           rows={rows}
           manualData={manualData}
           manualErr={manualErr}
+          form={form}
           onChange={(nextRows) => setPrev({ rows: nextRows })}
         />
       </>
@@ -2942,6 +2960,13 @@ function PreventiviUpload({ form, setForm }) {
         <span className="k-prev-drop-cta">Zgjidh skedarin</span>
       </button>
 
+      {loadErr && (
+        <div className="k-prev-error">
+          <span className="material-icons">error_outline</span>
+          <span>{loadErr}</span>
+        </div>
+      )}
+
       <input
         ref={inputRef}
         type="file"
@@ -2959,12 +2984,39 @@ function PreventiviUpload({ form, setForm }) {
 }
 
 // ---------- Preventivi editor ----------
-function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
+function PreventiviEditor({ rows, manualData, manualErr, form, onChange }) {
   const [activeId, setActiveId] = React.useState(null);
-  const [filter, setFilter]     = React.useState('all'); // all | auto | manual | none
+  const [filter, setFilter]     = React.useState('all'); // all | auto | manual | none | partner:<id>
+
+  // --- Bashkim operatorësh: caktimi i zërave te kompanitë ---
+  const isConsortium = form && form.lloji === 'Bashkim operatorësh ekonomikë';
+  const partners = React.useMemo(
+    () => (isConsortium ? (form.consortium?.partners || []).filter((p) => p && p.id) : []),
+    [isConsortium, form]
+  );
+  const partnerById = React.useMemo(() => {
+    const m = {};
+    partners.forEach((p, i) => { m[p.id] = { ...p, idx: i }; });
+    return m;
+  }, [partners]);
 
   const dataRows = React.useMemo(() => rows.filter((r) => r.type === 'row'), [rows]);
   const sectionRows = React.useMemo(() => rows.filter((r) => r.type === 'section'), [rows]);
+
+  // Caktim automatik (një herë) kur ka bashkim, ≥2 partnerë, dhe zërat s'kanë ende caktim.
+  React.useEffect(() => {
+    if (!isConsortium || partners.length < 2 || !dataRows.length) return;
+    if (typeof window.assignPreventivToPartners !== 'function') return;
+    const needsAssign = dataRows.some((r) => !r.assignment);
+    if (!needsAssign) return;
+    onChange(window.assignPreventivToPartners(rows, partners));
+  }, [isConsortium, partners, dataRows.length]); // eslint-disable-line
+
+  const setRowAssignment = (id, assignment) => {
+    onChange(rows.map((r) => r.id === id ? { ...r, assignment } : r));
+  };
+
+  const showCompanyCol = isConsortium && partners.length >= 2;
 
   // Stats
   const stats = React.useMemo(() => {
@@ -2976,6 +3028,23 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
     }
     return s;
   }, [dataRows]);
+
+  // Zërat pa çmim (për validimin / banner-in e bllokimit).
+  const unpriced = React.useMemo(
+    () => (typeof window.unpricedRows === 'function' ? window.unpricedRows(rows) : []),
+    [rows]
+  );
+
+  // Balanca aktuale për partner (për banner-in e ndarjes).
+  const balance = React.useMemo(
+    () => (isConsortium && partners.length >= 2 && typeof window.partnerBalance === 'function'
+      ? window.partnerBalance(rows, partners) : []),
+    [isConsortium, partners, rows]
+  );
+  const aiCount = React.useMemo(
+    () => dataRows.filter((r) => r.assignment && r.assignment.by === 'ai').length,
+    [dataRows]
+  );
 
   // Per-section subtotals
   const sectionSums = React.useMemo(() => {
@@ -2995,6 +3064,30 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
 
   const tvsh   = +(grand * 0.20).toFixed(2);
   const totali = +(grand + tvsh).toFixed(2);
+
+  // Totalet për secilën kompani të bashkimit — secila dorëzon ofertën e vet.
+  // Vlera e një zëri shpërndahet sipas allocations (single=100% një kompanie,
+  // split=% e secilës). TVSH 20% mbi nën-shumën e secilës.
+  const partnerTotals = React.useMemo(() => {
+    if (!showCompanyCol) return [];
+    const sums = {};
+    partners.forEach((p) => { sums[p.id] = 0; });
+    for (const r of dataRows) {
+      const v = Number(r.vlefta);
+      if (!isFinite(v) || v <= 0) continue;
+      const alloc = (r.assignment && r.assignment.allocations) || [];
+      if (!alloc.length) continue;
+      alloc.forEach((a) => {
+        if (sums[a.partnerId] != null) sums[a.partnerId] += v * (Number(a.percent) || 0) / 100;
+      });
+    }
+    return partners.map((p, i) => {
+      const base = +(sums[p.id] || 0).toFixed(2);
+      const vat  = +(base * 0.20).toFixed(2);
+      return { partnerId: p.id, name: partnerShortName(p), color: partnerColor(i),
+               grand: base, tvsh: vat, totali: +(base + vat).toFixed(2) };
+    });
+  }, [showCompanyCol, partners, dataRows]);
 
   const updateRow = (id, patch) => {
     onChange(rows.map((r) => r.id === id ? { ...r, ...patch } : r));
@@ -3033,11 +3126,16 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
     activeId ? dataRows.find((r) => r.id === activeId) : null,
   [activeId, dataRows]);
 
+  const rowPartnerIds = (r) =>
+    ((r.assignment && r.assignment.allocations) || []).map((a) => a.partnerId);
+
   const passesFilter = (r) => {
     if (filter === 'all') return true;
     if (filter === 'auto') return r.match === 'auto' || r.match === 'chosen';
     if (filter === 'manual') return r.match === 'manual';
     if (filter === 'none') return r.match === 'none' || r.match == null;
+    if (filter === 'unpriced') return !(Number(r.cmimi) > 0) && !(r.match === 'manual' && Number(r.cmimi) === 0);
+    if (filter.indexOf('partner:') === 0) return rowPartnerIds(r).indexOf(filter.slice(8)) !== -1;
     return true;
   };
 
@@ -3063,29 +3161,93 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
   return (
     <div className={'k-pe' + (activeRow ? ' has-inspector' : '')}>
       <header className="k-pe-head">
+        {showCompanyCol ? (
+          <div className="k-pe-totals-by">
+            {partnerTotals.map((pt) => (
+              <div key={pt.partnerId} className="k-pe-ptotal" style={{ '--pc': pt.color }}>
+                <div className="k-pe-ptotal-head">
+                  <i className="k-pe-dot" /> {pt.name}
+                </div>
+                <div className="k-pe-ptotal-rows">
+                  <span>Shuma</span><b>{formatCurrency(pt.grand)}</b>
+                  <span>TVSH 20%</span><b>{formatCurrency(pt.tvsh)}</b>
+                  <span className="is-total">Totali</span><b className="is-total">{formatCurrency(pt.totali)} ALL</b>
+                </div>
+              </div>
+            ))}
+            <div className="k-pe-ptotal is-combined">
+              <div className="k-pe-ptotal-head"><span className="material-icons">functions</span> Totali i përbashkët</div>
+              <div className="k-pe-ptotal-rows">
+                <span>Shuma</span><b>{formatCurrency(grand)}</b>
+                <span>TVSH 20%</span><b>{formatCurrency(tvsh)}</b>
+                <span className="is-total">Totali</span><b className="is-total">{formatCurrency(totali)} ALL</b>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="k-pe-totals">
           <div><span>Shuma analiza</span><strong>{formatCurrency(grand)} ALL</strong></div>
           <div><span>TVSH (20%)</span><strong>{formatCurrency(tvsh)} ALL</strong></div>
           <div className="is-total"><span>Totali</span><strong>{formatCurrency(totali)} ALL</strong></div>
         </div>
+        )}
         <div className="k-pe-actions">
           <button type="button" className="k-pe-filter-group" role="tablist">
             {[
-              { id: 'all',    label: 'Të gjitha', n: stats.total },
-              { id: 'none',   label: 'Pa match',  n: stats.none },
-              { id: 'manual', label: 'Manual',    n: stats.manual },
-              { id: 'auto',   label: 'Auto',      n: stats.auto },
+              { id: 'all',      label: 'Të gjitha', n: stats.total },
+              { id: 'unpriced', label: 'Pa çmim',   n: unpriced.length },
+              { id: 'manual',   label: 'Manual',    n: stats.manual },
+              { id: 'auto',     label: 'Auto',      n: stats.auto },
             ].map((f) => (
               <span
                 key={f.id}
-                className={'k-pe-filter' + (filter === f.id ? ' is-on' : '')}
+                className={'k-pe-filter' + (filter === f.id ? ' is-on' : '') + (f.id === 'unpriced' && f.n > 0 ? ' is-alert' : '')}
                 onClick={() => setFilter(f.id)}>
                 {f.label} <b>{f.n}</b>
+              </span>
+            ))}
+            {isConsortium && partners.length >= 2 && partners.map((p, i) => (
+              <span
+                key={p.id}
+                className={'k-pe-filter k-pe-filter-partner' + (filter === 'partner:' + p.id ? ' is-on' : '')}
+                style={{ '--pc': partnerColor(i) }}
+                onClick={() => setFilter(filter === 'partner:' + p.id ? 'all' : 'partner:' + p.id)}>
+                <i className="k-pe-dot" /> {partnerShortName(p)}
               </span>
             ))}
           </button>
         </div>
       </header>
+
+      {unpriced.length > 0 && (
+        <div className="k-pe-banner is-alert">
+          <span className="material-icons">price_change</span>
+          <div className="k-pe-banner-txt">
+            <strong>{unpriced.length} {unpriced.length === 1 ? 'zë pa çmim' : 'zëra pa çmim'}</strong>
+            <span> — shërbime që s'gjenden te manuali. Plotëso çmimin për të vazhduar në hapin tjetër.</span>
+          </div>
+          <button type="button" className="k-pe-banner-btn"
+                  onClick={() => { setFilter('unpriced'); setActiveId(unpriced[0].id); }}>
+            Shko te zëri i parë
+          </button>
+        </div>
+      )}
+
+      {isConsortium && partners.length >= 2 && aiCount > 0 && (
+        <div className="k-pe-banner is-ai">
+          <span className="material-icons">groups</span>
+          <div className="k-pe-banner-txt">
+            <span className="k-pe-balance">
+              {balance.map((b, i) => (
+                <span key={b.partnerId} className="k-pe-balance-item" style={{ '--pc': partnerColor(i) }}>
+                  <i className="k-pe-dot" /> {partnerShortName(partnerById[b.partnerId] || {})}: <b>{b.sharePct}%</b>
+                  <em> (deklaruar {Math.round(b.percent)}%)</em>
+                </span>
+              ))}
+            </span>
+          </div>
+        </div>
+      )}
 
       {manualErr && (
         <div className="k-man-empty">
@@ -3109,6 +3271,7 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
                 <th className="is-num" style={{ width: 90 }}>Sasia</th>
                 <th className="is-num" style={{ width: 120 }}>Çmimi</th>
                 <th className="is-num is-total" style={{ width: 140 }}>Vlefta</th>
+                {showCompanyCol && <th style={{ width: 150 }}>Kompania</th>}
                 <th style={{ width: 110 }}>Status</th>
               </tr>
             </thead>
@@ -3123,19 +3286,22 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
                         {r.title}
                       </td>
                       <td className="is-num is-total">{formatCurrency(sum)}</td>
+                      {showCompanyCol && <td />}
                       <td />
                     </tr>
                   );
                 }
                 const isActive = activeId === r.id;
-                const pill =
-                  r.match === 'auto'   ? { cls: 'is-ok',     icon: 'check_circle', label: 'Auto' } :
-                  r.match === 'chosen' ? { cls: 'is-ok',     icon: 'check_circle', label: 'Zgjedhur' } :
-                  r.match === 'manual' ? { cls: 'is-indigo', icon: 'edit',         label: 'Manual' } :
-                                         { cls: 'is-warn',   icon: 'warning',      label: 'Pa match' };
+                const isUnpriced = !(Number(r.cmimi) > 0) && !(r.match === 'manual' && Number(r.cmimi) === 0);
+                const pill = isUnpriced
+                  ? { cls: 'is-danger', icon: 'price_change', label: 'Pa çmim' }
+                  : r.match === 'auto'   ? { cls: 'is-ok',     icon: 'check_circle', label: 'Auto' } :
+                    r.match === 'chosen' ? { cls: 'is-ok',     icon: 'check_circle', label: 'Zgjedhur' } :
+                    r.match === 'manual' ? { cls: 'is-indigo', icon: 'edit',         label: 'Manual' } :
+                                           { cls: 'is-warn',   icon: 'warning',      label: 'Pa match' };
                 return (
                   <tr key={r.id}
-                      className={'k-pe-data-row' + (isActive ? ' is-active' : '')}
+                      className={'k-pe-data-row' + (isActive ? ' is-active' : '') + (isUnpriced ? ' is-unpriced' : '')}
                       onClick={() => setActiveId(isActive ? null : r.id)}>
                     <td className="k-pe-td-nr">{r.nr}</td>
                     <td className="k-man-td-code">{r.kodi}</td>
@@ -3153,6 +3319,11 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
                       />
                     </td>
                     <td className="is-num is-total">{formatCurrency(r.vlefta)}</td>
+                    {showCompanyCol && (
+                      <td className="k-pe-td-company">
+                        <CompanyBadges assignment={r.assignment} partnerById={partnerById} />
+                      </td>
+                    )}
                     <td>
                       <span className={'d-pill ' + pill.cls}>
                         <span className="material-icons">{pill.icon}</span>
@@ -3169,6 +3340,10 @@ function PreventiviEditor({ rows, manualData, manualErr, onChange }) {
         {activeRow && (
           <PreventiviInspector
             row={activeRow}
+            isConsortium={showCompanyCol}
+            partners={partners}
+            partnerById={partnerById}
+            onAssign={(a) => setRowAssignment(activeRow.id, a)}
             onClose={() => setActiveId(null)}
             onSync={() => handleSyncRow(activeRow)}
             onChoose={(c) => handleChooseCandidate(activeRow, c)}
@@ -3189,10 +3364,145 @@ function Stat({ label, value, tone }) {
   );
 }
 
-function PreventiviInspector({ row, onClose, onSync, onChoose, onPriceChange }) {
-  const hasSource = !!row.source;
+// Badge(t) e kompanisë për një zë preventivi te tabela.
+function CompanyBadges({ assignment, partnerById }) {
+  if (!assignment || !assignment.allocations || !assignment.allocations.length) {
+    return <span className="k-pe-company-empty">—</span>;
+  }
+  const split = assignment.allocations.length > 1;
   return (
-    <aside className="k-pe-inspector">
+    <span className={'k-pe-company' + (split ? ' is-split' : '')}>
+      {assignment.allocations.map((a) => {
+        const p = partnerById[a.partnerId];
+        if (!p) return null;
+        return (
+          <span key={a.partnerId} className="k-pe-company-badge" style={{ '--pc': partnerColor(p.idx) }}>
+            <i className="k-pe-dot" />
+            {partnerShortName(p)}{split ? ' ' + Math.round(a.percent) + '%' : ''}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+// Seksioni i caktimit te kompania brenda inspektorit (single / split + validim 100%).
+function InspectorAssignment({ row, partners, partnerById, onAssign }) {
+  const a = row.assignment || { mode: 'single', allocations: [{ partnerId: partners[0] && partners[0].id, percent: 100 }], by: 'ai', reason: null };
+  const mode = a.mode || 'single';
+  const allocs = a.allocations && a.allocations.length ? a.allocations : [{ partnerId: partners[0] && partners[0].id, percent: 100 }];
+
+  const emit = (next) => onAssign({ ...next, by: 'user', reason: a.reason });
+
+  const setSingle = (partnerId) =>
+    emit({ mode: 'single', allocations: [{ partnerId, percent: 100 }] });
+
+  const toSplit = () => {
+    // Fillo split-in me 2 partnerët e parë (ose ndarje sipas % të deklaruar).
+    const first = allocs[0] && allocs[0].partnerId;
+    const second = partners.find((p) => p.id !== first);
+    if (!second) return; // s'ka mjaft partnerë për split
+    emit({ mode: 'split', allocations: [
+      { partnerId: first || partners[0].id, percent: 50 },
+      { partnerId: second.id, percent: 50 },
+    ] });
+  };
+
+  const setSplitPercent = (idx, val) => {
+    const next = allocs.map((al, i) => i === idx ? { ...al, percent: val === '' ? '' : Number(val) } : al);
+    emit({ mode: 'split', allocations: next });
+  };
+  const setSplitPartner = (idx, partnerId) => {
+    const next = allocs.map((al, i) => i === idx ? { ...al, partnerId } : al);
+    emit({ mode: 'split', allocations: next });
+  };
+  const addSplitRow = () => {
+    const used = allocs.map((al) => al.partnerId);
+    const free = partners.find((p) => used.indexOf(p.id) === -1);
+    if (!free) return;
+    emit({ mode: 'split', allocations: [...allocs, { partnerId: free.id, percent: 0 }] });
+  };
+  const removeSplitRow = (idx) => {
+    if (allocs.length <= 2) { setSingle(allocs[0].partnerId); return; }
+    emit({ mode: 'split', allocations: allocs.filter((_, i) => i !== idx) });
+  };
+
+  const splitTotal = Math.round(allocs.reduce((s, al) => s + (Number(al.percent) || 0), 0) * 100) / 100;
+
+  return (
+    <div className="k-pe-insp-assign">
+      <div className="k-pe-insp-assign-head">
+        <span className="material-icons">groups</span>
+        <strong>Caktimi te kompania</strong>
+        {a.by === 'ai' && <span className="k-pe-insp-aitag"><i className="material-icons">auto_awesome</i> AI</span>}
+      </div>
+
+      {a.reason && a.by === 'ai' && <p className="k-pe-insp-reason">{a.reason}</p>}
+
+      <div className="k-pe-insp-modetabs">
+        <button type="button" className={mode === 'single' ? 'is-on' : ''}
+                onClick={() => setSingle(allocs[0] ? allocs[0].partnerId : partners[0].id)}>
+          Një kompani
+        </button>
+        <button type="button" className={mode === 'split' ? 'is-on' : ''}
+                onClick={toSplit} disabled={partners.length < 2}>
+          I ndarë
+        </button>
+      </div>
+
+      {mode === 'single' ? (
+        <select className="k-pe-insp-select" value={allocs[0] ? allocs[0].partnerId : ''}
+                onChange={(e) => setSingle(e.target.value)}>
+          {partners.map((p) => (
+            <option key={p.id} value={p.id}>{partnerShortName(p)}</option>
+          ))}
+        </select>
+      ) : (
+        <div className="k-pe-insp-split">
+          {allocs.map((al, i) => {
+            const p = partnerById[al.partnerId];
+            return (
+              <div key={i} className="k-pe-insp-split-row" style={{ '--pc': p ? partnerColor(p.idx) : '#999' }}>
+                <i className="k-pe-dot" />
+                <select value={al.partnerId} onChange={(e) => setSplitPartner(i, e.target.value)}>
+                  {partners.map((pp) => (
+                    <option key={pp.id} value={pp.id}>{partnerShortName(pp)}</option>
+                  ))}
+                </select>
+                <div className="k-pe-insp-split-pct">
+                  <input type="number" min="0" max="100" step="1"
+                         value={al.percent === '' ? '' : al.percent}
+                         onChange={(e) => setSplitPercent(i, e.target.value)} />
+                  <span>%</span>
+                </div>
+                <button type="button" className="k-pe-insp-split-x" onClick={() => removeSplitRow(i)}
+                        aria-label="Hiq">
+                  <span className="material-icons">close</span>
+                </button>
+              </div>
+            );
+          })}
+          <div className="k-pe-insp-split-foot">
+            {allocs.length < partners.length && (
+              <button type="button" className="k-pe-insp-split-add" onClick={addSplitRow}>
+                <span className="material-icons">add</span> Shto kompani
+              </button>
+            )}
+            <span className={'k-pe-insp-split-total ' + (splitTotal === 100 ? 'is-ok' : 'is-bad')}>
+              Totali {splitTotal}% / 100%
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreventiviInspector({ row, isConsortium, partners, partnerById, onAssign, onClose, onSync, onChoose, onPriceChange }) {
+  const hasSource = !!row.source;
+  const isUnpriced = !(Number(row.cmimi) > 0) && !(row.match === 'manual' && Number(row.cmimi) === 0);
+  return (
+    <aside className={'k-pe-inspector' + (isUnpriced ? ' is-unpriced' : '')}>
       <header className="k-pe-insp-head">
         <div>
           <div className="k-pe-insp-eyebrow">Inspektor i zërit</div>
@@ -3206,6 +3516,13 @@ function PreventiviInspector({ row, onClose, onSync, onChoose, onPriceChange }) 
 
       <p className="k-pe-insp-name">{row.emertimi}</p>
 
+      {isUnpriced && (
+        <div className="k-pe-insp-alert">
+          <span className="material-icons">price_change</span>
+          <span>Ky zë s'ka çmim nga manuali. Plotëso çmimin manualisht më poshtë për të vazhduar.</span>
+        </div>
+      )}
+
       <div className="k-pe-insp-current">
         <div>
           <span className="k-pe-insp-k">Sasia</span>
@@ -3214,7 +3531,7 @@ function PreventiviInspector({ row, onClose, onSync, onChoose, onPriceChange }) 
         <div>
           <span className="k-pe-insp-k">Çmimi</span>
           <input
-            className="k-pe-insp-price"
+            className={'k-pe-insp-price' + (isUnpriced ? ' is-empty' : '')}
             type="number"
             step="0.01"
             value={row.cmimi == null ? '' : row.cmimi}
@@ -3227,6 +3544,10 @@ function PreventiviInspector({ row, onClose, onSync, onChoose, onPriceChange }) 
           <strong>{formatCurrency(row.vlefta)} ALL</strong>
         </div>
       </div>
+
+      {isConsortium && (
+        <InspectorAssignment row={row} partners={partners} partnerById={partnerById} onAssign={onAssign} />
+      )}
 
       {hasSource ? (
         <div className="k-pe-insp-source">
@@ -3593,7 +3914,17 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
   const setConsortium = (k) => (v) => setForm((f) => ({ ...f, consortium: { ...f.consortium, [k]: v } }));
 
   const LAST_STEP = 7;
+
+  // Mini-validim: te hapi Preventivi (index 4) bllokon kalimin nëse ka zëra pa çmim.
+  // Vlen për çdo lloj dosjeje. Aktiv vetëm pasi është ngarkuar një preventiv (ka zëra).
+  const PREVENTIVI_STEP = 4;
+  const preventiviRows = (form.preventivi && form.preventivi.rows) || [];
+  const unpricedCount = preventiviRows.length && typeof window.unpricedRows === 'function'
+    ? window.unpricedRows(preventiviRows).length : 0;
+  const preventiviBlocked = step === PREVENTIVI_STEP && unpricedCount > 0;
+
   const goNext = () => {
+    if (preventiviBlocked) return; // zëra pa çmim — mos përparo
     if (step < LAST_STEP) setStep(step + 1);
     else onNext && onNext();
   };
@@ -3660,7 +3991,17 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
               </button>
             )}
             <OutlineButton onClick={onCancel}>Ruaj si draft</OutlineButton>
-            <MuiButton icon={step === LAST_STEP ? 'check' : 'arrow_forward'} onClick={goNext}>
+            {preventiviBlocked && (
+              <span className="k-footer-block">
+                <span className="material-icons">price_change</span>
+                {unpricedCount} {unpricedCount === 1 ? 'zë pa çmim' : 'zëra pa çmim'} — plotëso për të vazhduar
+              </span>
+            )}
+            <MuiButton
+              icon={step === LAST_STEP ? 'check' : 'arrow_forward'}
+              onClick={goNext}
+              disabled={preventiviBlocked}
+              title={preventiviBlocked ? 'Plotëso çmimet e mangëta në preventiv' : undefined}>
               {step === LAST_STEP ? 'Krijo dosjen' : 'Hapi tjetër'}
             </MuiButton>
           </div>
