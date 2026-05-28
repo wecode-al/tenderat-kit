@@ -532,6 +532,9 @@ function CatalogView({ node, onUpload }) {
     const init = {};
     autoTranslations.forEach((t) => { init[t.code] = 'pending'; });
     setTranslationStatus(init);
+    // Mode demo: te k1 lër statusin pending pa mbarim (loop), që spinner-i të
+    // jetë gjithmonë i dukshëm për prezantim. Dosjet e tjera kalojnë normalisht.
+    if (node && node.id === 'k1') return;
     const timers = autoTranslations.map((t, i) =>
       setTimeout(() => {
         setTranslationStatus((s) => ({ ...s, [t.code]: 'ready' }));
@@ -581,7 +584,7 @@ function CatalogView({ node, onUpload }) {
             <div><dt>Gjuha origjinale</dt><dd>{original.flag} {original.label}</dd></div>
             {needsTranslation && (
               <div className="cp-dochead-translations">
-                <dt>Përkthim me AI</dt>
+                <dt>Përkthim</dt>
                 <dd className="cp-trans-chips">
                   {autoTranslations.map((t) => {
                     const status = translationStatus[t.code] || 'pending';
@@ -590,7 +593,7 @@ function CatalogView({ node, onUpload }) {
                       <span
                         key={t.code}
                         className={'cp-trans-chip is-' + status}
-                        title={isReady ? 'Përkthimi është gati' : 'Po përkthen me AI…'}>
+                        title={isReady ? 'Përkthimi është gati' : 'Po përkthen…'}>
                         <span className="cp-trans-chip-flag" aria-hidden>{t.flag}</span>
                         <span className="cp-trans-chip-label">{t.label}</span>
                         {isReady ? (
@@ -636,7 +639,7 @@ function CatalogView({ node, onUpload }) {
                       <span className="cp-action-menu-main">
                         <span className="cp-action-menu-name">{l.label}</span>
                         <span className="cp-action-menu-sub">
-                          {isOrig ? 'Origjinal · PDF' : 'Përkthim me AI · PDF'}
+                          {isOrig ? 'Origjinal · PDF' : 'Përkthim · PDF'}
                         </span>
                       </span>
                       <span className="material-icons cp-action-menu-dl">file_download</span>
@@ -692,7 +695,7 @@ function CatalogView({ node, onUpload }) {
           <div className="cp-pdf-page">
             {translating ? (
               <div className="cp-catalog-translating">
-                <span className="material-icons cp-catalog-spin">auto_awesome</span>
+                <span className="material-icons cp-catalog-spin">autorenew</span>
                 Duke përkthyer në {current.label}…
               </div>
             ) : (
