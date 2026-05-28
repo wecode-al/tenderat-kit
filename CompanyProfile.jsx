@@ -495,22 +495,51 @@ function CatalogView({ node, onUpload }) {
   const uploaded = (node && node.uploaded) || '—';
   const originalCode = (node && CATALOG_ORIGINALS[node.id]) || 'sq';
   const original = CATALOG_LANG_LIBRARY[originalCode];
-  const needsTranslation = originalCode !== 'sq';
-  // Available tabs: always the original; if not Albanian, also the AI Albanian.
-  const tabs = needsTranslation ? [original, CATALOG_LANG_LIBRARY.sq] : [original];
+  // Përkthime që krijohen automatikisht me AI: gjithmonë Shqip + English, përveç origjinalit.
+  // Useri shqiptar lexon në Shqip; partnerët/autoritetet ndërkombëtare lexojnë në English.
+  const TRANSLATION_TARGETS = ['sq', 'en'];
+  const autoTranslations = TRANSLATION_TARGETS
+    .filter((code) => code !== originalCode)
+    .map((code) => CATALOG_LANG_LIBRARY[code]);
+  const needsTranslation = autoTranslations.length > 0;
+  // Tab-at: origjinali + të gjitha përkthimet automatike.
+  const tabs = [original, ...autoTranslations];
 
-  // Default view: if the original is not Albanian, land on the Albanian (AI)
-  // translation because the user is Albanian.
-  const [lang, setLang] = React.useState(needsTranslation ? 'sq' : originalCode);
+  // Default view: nëse origjinali NUK është shqip, hap te përkthimi shqip (useri është shqiptar).
+  // Përndryshe hap te origjinali.
+  const defaultLang = originalCode !== 'sq' ? 'sq' : originalCode;
+  const [lang, setLang] = React.useState(defaultLang);
   // Reset when switching catalogs.
   React.useEffect(() => {
-    setLang(needsTranslation ? 'sq' : originalCode);
+    setLang(defaultLang);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node && node.id]);
 
   const current = CATALOG_LANG_LIBRARY[lang] || original;
   const isViewingOriginal = lang === originalCode;
   const [translating, setTranslating] = React.useState(false);
+
+  // Statusi për çdo gjuhë përkthimi: 'pending' (po gjenerohet) → 'ready' (gati).
+  // Pas hapjes së dokumentit, simulojmë gjenerim AI me kohëzgjatje të shkurtër,
+  // që useri të shohë qartë procesin. Real-i do të vinte nga server.
+  const [translationStatus, setTranslationStatus] = React.useState(() => {
+    const init = {};
+    autoTranslations.forEach((t) => { init[t.code] = 'pending'; });
+    return init;
+  });
+  React.useEffect(() => {
+    // Reset kur ndërrohet katalogu — fillojmë pa-të-gatshme dhe i mbarojmë gradualisht.
+    const init = {};
+    autoTranslations.forEach((t) => { init[t.code] = 'pending'; });
+    setTranslationStatus(init);
+    const timers = autoTranslations.map((t, i) =>
+      setTimeout(() => {
+        setTranslationStatus((s) => ({ ...s, [t.code]: 'ready' }));
+      }, 900 + i * 700) // kohëzgjatje pak më e ndryshme për secilën
+    );
+    return () => { timers.forEach(clearTimeout); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node && node.id]);
   const [downloadOpen, setDownloadOpen] = React.useState(false);
   const downloadRef = React.useRef(null);
   React.useEffect(() => {
@@ -550,9 +579,31 @@ function CatalogView({ node, onUpload }) {
           <dl className="cp-dochead-meta">
             <div><dt>Ngarkuar</dt><dd>{uploaded}</dd></div>
             <div><dt>Gjuha origjinale</dt><dd>{original.flag} {original.label}</dd></div>
-            {needsTranslation
-              ? <div><dt>Përkthim</dt><dd>🇦🇱 Shqip · me AI</dd></div>
-              : null}
+            {needsTranslation && (
+              <div className="cp-dochead-translations">
+                <dt>Përkthim me AI</dt>
+                <dd className="cp-trans-chips">
+                  {autoTranslations.map((t) => {
+                    const status = translationStatus[t.code] || 'pending';
+                    const isReady = status === 'ready';
+                    return (
+                      <span
+                        key={t.code}
+                        className={'cp-trans-chip is-' + status}
+                        title={isReady ? 'Përkthimi është gati' : 'Po përkthen me AI…'}>
+                        <span className="cp-trans-chip-flag" aria-hidden>{t.flag}</span>
+                        <span className="cp-trans-chip-label">{t.label}</span>
+                        {isReady ? (
+                          <span className="material-icons cp-trans-chip-icon">check_circle</span>
+                        ) : (
+                          <span className="cp-trans-chip-spinner" aria-hidden />
+                        )}
+                      </span>
+                    );
+                  })}
+                </dd>
+              </div>
+            )}
           </dl>
         </div>
         <div className="cp-dochead-actions">
@@ -606,18 +657,26 @@ function CatalogView({ node, onUpload }) {
         <div className="cp-catalog-langs" role="tablist" aria-label="Gjuha">
           {tabs.map((l) => {
             const isOrig = l.code === originalCode;
+            const status = isOrig ? 'ready' : (translationStatus[l.code] || 'pending');
+            const isPending = status === 'pending';
             return (
               <button
                 key={l.code}
                 role="tab"
                 aria-selected={lang === l.code}
-                className={'cp-catalog-lang' + (lang === l.code ? ' is-active' : '')}
-                onClick={() => switchLang(l.code)}>
+                aria-busy={isPending}
+                disabled={isPending}
+                className={'cp-catalog-lang' + (lang === l.code ? ' is-active' : '') + (isPending ? ' is-pending' : '')}
+                onClick={() => !isPending && switchLang(l.code)}>
                 <span className="cp-catalog-flag" aria-hidden>{l.flag}</span>
                 {l.label}
                 {isOrig
                   ? <span className="cp-catalog-tag is-origin">origjinali</span>
-                  : <span className="cp-catalog-tag is-ai"><span className="material-icons">auto_awesome</span>AI</span>}
+                  : isPending
+                    ? <span className="cp-catalog-tag is-loading">
+                        <span className="cp-trans-chip-spinner" aria-hidden /> po përkthen
+                      </span>
+                    : null}
               </button>
             );
           })}

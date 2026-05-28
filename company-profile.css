@@ -2001,3 +2001,76 @@
 }
 .add-iso-ai-note.is-muted > .material-icons { color: var(--t-fg-2); }
 .add-iso-ai-note.is-muted strong { color: var(--t-fg-1); }
+
+/* ============================================================
+   Translation chips te header-i (Përkthim me AI · gjuhë + status)
+   Stil delikat — chip i vogël me hapësirë të mjaftueshme.
+   ============================================================ */
+.cp-trans-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.cp-trans-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  background: var(--t-white, #fff);
+  font: 600 12px/1 var(--t-font-ui);
+  color: var(--t-fg-1, #1E293B);
+  white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.cp-trans-chip.is-pending {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: var(--t-fg-2, #64748B);
+}
+.cp-trans-chip.is-ready {
+  background: color-mix(in oklab, #1B7F3A 5%, white);
+  border-color: color-mix(in oklab, #1B7F3A 22%, white);
+}
+.cp-trans-chip-flag { font-size: 13px; line-height: 1; }
+.cp-trans-chip-label { letter-spacing: 0.1px; }
+.cp-trans-chip-icon {
+  font-size: 13px !important;
+  line-height: 1;
+  color: #1B7F3A;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Loader rrethor — i njëjti spinner që përdoret te tab-i kur përkthimi pending. */
+.cp-trans-chip-spinner {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in oklab, var(--t-brand, #FF8400) 30%, transparent);
+  border-top-color: var(--t-brand, #FF8400);
+  animation: cpTransSpin 720ms linear infinite;
+  flex: none;
+}
+@keyframes cpTransSpin { to { transform: rotate(360deg); } }
+
+/* Variant te tab-i i gjuhës kur përkthimi po gjenerohet. */
+.cp-catalog-lang.is-pending {
+  opacity: 0.7;
+  cursor: progress;
+}
+.cp-catalog-tag.is-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--t-brand, #FF8400) 10%, white);
+  color: var(--t-brand, #FF8400);
+  font: 700 10px/1 var(--t-font-ui);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
