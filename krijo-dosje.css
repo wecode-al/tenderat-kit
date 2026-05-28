@@ -4248,19 +4248,6 @@ button.k-prev-file-btn .material-icons { font-size: 14px; }
   color: var(--t-fg-1);
 }
 .k-pe-insp-assign-head .material-icons { font-size: 18px; color: var(--t-fg-2); }
-.k-pe-insp-aitag {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: #F3ECFF;
-  color: #7C3AED;
-  font: 700 10.5px/1 var(--t-font-ui);
-  letter-spacing: 0.4px;
-}
-.k-pe-insp-aitag .material-icons { font-size: 13px !important; }
 .k-pe-insp-reason {
   margin: 0;
   font: 12px/1.5 var(--t-font-ui);

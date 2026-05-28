@@ -3434,7 +3434,6 @@ function InspectorAssignment({ row, partners, partnerById, onAssign }) {
       <div className="k-pe-insp-assign-head">
         <span className="material-icons">groups</span>
         <strong>Caktimi te kompania</strong>
-        {a.by === 'ai' && <span className="k-pe-insp-aitag"><i className="material-icons">auto_awesome</i> AI</span>}
       </div>
 
       {a.reason && a.by === 'ai' && <p className="k-pe-insp-reason">{a.reason}</p>}
