@@ -472,4 +472,159 @@
 .d-group-empty .material-icons { font-size: 32px; color: #94A3B8; }
 .d-group-empty p { margin: 0; font: 13px/1.4 Inter, system-ui, sans-serif; }
 
+/* ============================================================
+   Document viewer modal (Shiko dokumentin 👁)
+   ============================================================ */
+.d-view-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 19, 28, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: dViewFade 160ms ease;
+}
+@keyframes dViewFade { from { opacity: 0; } to { opacity: 1; } }
+
+.d-view {
+  width: min(820px, 96vw);
+  max-height: 94vh;
+  background: var(--t-white, #fff);
+  border-radius: 14px;
+  box-shadow: 0 32px 80px -24px rgba(13, 19, 28, 0.45);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  animation: dViewIn 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+@keyframes dViewIn { from { transform: translateY(10px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.d-view-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--t-border-200, #E2E8F0);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  justify-content: space-between;
+  background: var(--t-bg, #F8FAFC);
+}
+.d-view-head-main { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+.d-view-ext {
+  width: 48px; height: 56px;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--t-brand, #FF8400) 12%, white);
+  color: var(--t-brand, #FF8400);
+  font: 700 11px/1 Inter, system-ui, sans-serif;
+  letter-spacing: 0.5px;
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.d-view-eyebrow {
+  font: 600 10.5px/1 Inter, system-ui, sans-serif;
+  letter-spacing: 0.6px;
+  color: var(--t-fg-2, #64748B);
+  margin-bottom: 4px;
+}
+.d-view-title {
+  margin: 0;
+  font: 700 16px/1.3 Inter, system-ui, sans-serif;
+  color: var(--t-fg-1, #1E293B);
+}
+.d-view-meta {
+  margin-top: 3px;
+  font: 12px/1.4 Inter, system-ui, sans-serif;
+  color: var(--t-fg-2, #64748B);
+}
+.d-view-meta b { color: var(--t-fg-1, #1E293B); font-weight: 600; }
+
+.d-view-head-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.d-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  background: var(--t-white, #fff);
+  border-radius: 8px;
+  font: 600 12.5px/1 Inter, system-ui, sans-serif;
+  color: var(--t-fg-1, #1E293B);
+  cursor: pointer;
+}
+.d-view-btn:hover { background: var(--t-bg, #F1F5F9); }
+.d-view-btn .material-icons { font-size: 16px; }
+.d-view-close {
+  width: 34px; height: 34px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--t-fg-2, #64748B);
+}
+.d-view-close:hover { background: var(--t-overlay-hover, #E2E8F0); color: var(--t-fg-1, #1E293B); }
+
+/* Trupi i parashikimit */
+.d-view-body {
+  padding: 24px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #EEF2F6 0%, #E2E8F0 100%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.d-view-paper {
+  width: min(680px, 100%);
+  /* Proporcioni A4 (1 : √2). Lartësia llogaritet nga gjerësia automatikisht. */
+  aspect-ratio: 1 / 1.414;
+  background: var(--t-white, #fff);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px -16px rgba(13, 19, 28, 0.18), 0 1px 2px rgba(13, 19, 28, 0.05);
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+}
+.d-view-paper-stamp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px dashed var(--t-border-200, #E2E8F0);
+  border-radius: 8px;
+  color: var(--t-fg-2, #64748B);
+  margin-bottom: 22px;
+}
+.d-view-paper-stamp .material-icons { color: var(--t-brand, #FF8400); }
+.d-view-paper-stamp strong { display: block; font: 600 13px/1.3 Inter, system-ui, sans-serif; color: var(--t-fg-1, #1E293B); }
+.d-view-paper-stamp span { font: 11.5px/1 Inter, system-ui, sans-serif; }
+.d-view-paper-h {
+  margin: 0 0 16px;
+  font: 700 18px/1.3 Inter, system-ui, sans-serif;
+  color: var(--t-fg-1, #1E293B);
+}
+.d-view-paper-lines { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+.d-view-paper-lines > div {
+  height: 9px;
+  background: linear-gradient(90deg, #E2E8F0 0%, #F1F5F9 80%);
+  border-radius: 3px;
+}
+.d-view-paper-lines > div.is-short { width: 62%; }
+.d-view-paper-foot {
+  margin-top: 28px;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--t-border-200, #E2E8F0);
+  font: 11px/1 Inter, system-ui, sans-serif;
+  color: var(--t-fg-2, #64748B);
+}
+
+@media (max-width: 640px) {
+  .d-view-paper { padding: 22px 18px; }
+  .d-view-head { flex-direction: column; }
+  .d-view-head-actions { width: 100%; justify-content: flex-end; }
+}
+
 /* ---------- Generic confirm modal ---------- */

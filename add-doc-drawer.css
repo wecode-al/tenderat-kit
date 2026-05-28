@@ -165,8 +165,34 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Input i ri për të riemërtuar dokumentin para se të shtohet.
+   Gjithmonë i dukshëm si fushë editable (border + sfond i bardhë), që useri
+   të kuptojë menjëherë se mund ta riemërojë — jo vetëm kur e klikon. */
+.add-doc-item-name-input {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--t-border-200, #E2E8F0);
+  border-radius: 8px;
+  background: var(--t-white);
+  font: 600 14px/18px var(--t-font-ui);
+  color: var(--t-fg-1);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.add-doc-item-name-input::placeholder {
+  color: var(--t-fg-2, #94A3B8);
+  font-weight: 400;
+}
+.add-doc-item-name-input:hover {
+  border-color: var(--t-fg-2, #94A3B8);
+}
+.add-doc-item-name-input:focus {
+  outline: none;
+  border-color: var(--t-brand, #FF8400);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--t-brand, #FF8400) 18%, transparent);
+}
 .add-doc-item-meta {
-  margin-top: 2px;
+  margin-top: 4px;
   font: 12px/16px var(--t-font-ui);
   color: var(--t-fg-2);
 }

@@ -30,6 +30,14 @@ function AddDocumentDrawer({ open, onClose, hideCategory = false, title = 'Shto 
     inputRef.current && inputRef.current.click();
   }
 
+  // Hiq prapashtesën nga emri i skedarit — extension-i shfaqet veçmas si badge,
+  // dhe useri ka më shumë gjasa të riemërtojë në një emër njerëzor (p.sh.
+  // "Bilanc financiar 2025" në vend të "DOC_4847A_signed_v2_final.pdf").
+  function nameWithoutExt(filename) {
+    const dot = filename.lastIndexOf('.');
+    return dot > 0 ? filename.slice(0, dot) : filename;
+  }
+
   function onFiles(e) {
     const list = Array.from(e.target.files || []);
     if (!list.length) return;
@@ -39,7 +47,7 @@ function AddDocumentDrawer({ open, onClose, hideCategory = false, title = 'Shto 
         const ext = (f.name.split('.').pop() || '').toUpperCase().slice(0, 4) || 'FILE';
         return {
           id: Math.random().toString(36).slice(2),
-          name: f.name,
+          name: nameWithoutExt(f.name),
           ext,
           size: (f.size / 1024 > 1024)
             ? (f.size / 1024 / 1024).toFixed(1) + ' MB'
@@ -61,19 +69,23 @@ function AddDocumentDrawer({ open, onClose, hideCategory = false, title = 'Shto 
       'Bilanc financiar 2025.xlsx',
       'Deklaratë tatimore.pdf',
     ];
-    const name = names[Math.floor(Math.random() * names.length)];
-    const ext  = name.split('.').pop().toUpperCase();
+    const fullName = names[Math.floor(Math.random() * names.length)];
+    const ext = fullName.split('.').pop().toUpperCase();
     setItems((cur) => [
       ...cur,
       {
         id: Math.random().toString(36).slice(2),
-        name, ext, size: fakeSize(), category: 'legal',
+        name: nameWithoutExt(fullName),
+        ext, size: fakeSize(), category: 'legal',
       },
     ]);
   }
 
   function setCategory(id, cat) {
     setItems((cur) => cur.map((it) => it.id === id ? { ...it, category: cat } : it));
+  }
+  function setName(id, name) {
+    setItems((cur) => cur.map((it) => it.id === id ? { ...it, name } : it));
   }
   function removeItem(id) {
     setItems((cur) => cur.filter((it) => it.id !== id));
@@ -133,8 +145,15 @@ function AddDocumentDrawer({ open, onClose, hideCategory = false, title = 'Shto 
                 <div key={it.id} className="add-doc-item">
                   <div className="add-doc-item-ext">{it.ext}</div>
                   <div className="add-doc-item-main">
-                    <div className="add-doc-item-name" title={it.name}>{it.name}</div>
-                    <div className="add-doc-item-meta">{it.size}</div>
+                    <input
+                      type="text"
+                      className="add-doc-item-name-input"
+                      value={it.name}
+                      placeholder="Emri i dokumentit"
+                      onChange={(e) => setName(it.id, e.target.value)}
+                      title="Riemërto dokumentin"
+                    />
+                    <div className="add-doc-item-meta">{it.ext} · {it.size}</div>
                     {!hideCategory && (
                       <div className="add-doc-item-cats">
                         {DOC_CATEGORIES.map((c) => (

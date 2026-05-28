@@ -65,7 +65,7 @@ function FactTile({ icon, label, value, accent, wide }) {
   );
 }
 
-function DocRow({ doc, partnerById, showCompany, onEdit, onDelete }) {
+function DocRow({ doc, partnerById, showCompany, onView, onEdit, onDelete }) {
   const partner = doc.partnerId ? partnerById[doc.partnerId] : null;
   return (
     <div className="d-doc-row">
@@ -89,7 +89,7 @@ function DocRow({ doc, partnerById, showCompany, onEdit, onDelete }) {
           </span>
         )
       )}
-      <button className="d-doc-action" title="Shiko dokumentin">
+      <button className="d-doc-action" title="Shiko dokumentin" onClick={onView}>
         <span className="material-icons">visibility</span>
       </button>
       <button className="d-doc-action" title="Ndrysho" onClick={onEdit}>
@@ -129,9 +129,71 @@ function ConfirmModal({ open, title, body, confirmLabel = 'Fshi', onCancel, onCo
 }
 window.ConfirmModal = ConfirmModal;
 
+// Popup parashikimi i dokumentit. Prototip — nuk ngarkon file real; tregon një
+// "fletë" placeholder me ikonë + meta, plus kompaninë (kur ekziston).
+function DocumentViewerModal({ open, doc, partner, onClose }) {
+  if (!open || !doc) return null;
+  // Përcakto ngjyrën/etiketën sipas extension-it nga meta (p.sh. "PDF · 840 KB · ...").
+  const extMatch = /^([A-Z]+)\s/.exec(doc.meta || '') || [];
+  const ext = (extMatch[1] || 'FILE').slice(0, 4);
+
+  const modal = (
+    <div className="d-view-scrim" onClick={onClose}>
+      <div className="d-view" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <header className="d-view-head">
+          <div className="d-view-head-main">
+            <div className="d-view-ext">{ext}</div>
+            <div>
+              <div className="d-view-eyebrow">{(doc.category || '').toUpperCase()}</div>
+              <h3 className="d-view-title">{doc.name}</h3>
+              <div className="d-view-meta">
+                {doc.meta}
+                {partner && <> · <b>{partner.name}</b></>}
+              </div>
+            </div>
+          </div>
+          <div className="d-view-head-actions">
+            <button type="button" className="d-view-btn" title="Shkarko">
+              <span className="material-icons">download</span>
+              Shkarko
+            </button>
+            <button type="button" className="d-view-close" onClick={onClose} aria-label="Mbyll">
+              <span className="material-icons">close</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="d-view-body">
+          {/* "Fletë" placeholder që përfaqëson dokumentin për prototip. */}
+          <div className="d-view-paper">
+            <div className="d-view-paper-stamp">
+              <span className="material-icons">description</span>
+              <div>
+                <strong>Parashikim i dokumentit</strong>
+                <span>{ext} · prototip pa file real</span>
+              </div>
+            </div>
+            <h4 className="d-view-paper-h">{doc.name}</h4>
+            <div className="d-view-paper-lines">
+              <div /><div /><div /><div /><div /><div /><div /><div />
+              <div className="is-short" /><div /><div /><div className="is-short" />
+            </div>
+            <div className="d-view-paper-foot">
+              <span>Faqe 1 / 1</span>
+              {partner && <span>{partner.name}</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  return ReactDOM.createPortal(modal, document.body);
+}
+
 function DossierDetailInline({ dossier, embedded = false }) {
   const d = dossier || { title: 'Ndërtimi - Rruga 4', count: 15 };
   const [addOpen, setAddOpen] = React.useState(false);
+  const [viewingDoc, setViewingDoc] = React.useState(null);  // dokumenti që po shihet ose null
   const [editingDoc, setEditingDoc] = React.useState(null);  // dokumenti që po redaktohet ose null
   const [deletingDoc, setDeletingDoc] = React.useState(null);
   const [removed, setRemoved] = React.useState(() => new Set());
@@ -287,6 +349,7 @@ function DossierDetailInline({ dossier, embedded = false }) {
                   doc={doc}
                   partnerById={partnerById}
                   showCompany={isMulti}
+                  onView={() => setViewingDoc(doc)}
                   onEdit={() => setEditingDoc(doc)}
                   onDelete={() => setDeletingDoc({ key: docKey(doc), name: doc.name })}
                 />
@@ -325,6 +388,13 @@ function DossierDetailInline({ dossier, embedded = false }) {
           }}
         />
       )}
+
+      <DocumentViewerModal
+        open={!!viewingDoc}
+        doc={viewingDoc}
+        partner={viewingDoc && viewingDoc.partnerId ? partnerById[viewingDoc.partnerId] : null}
+        onClose={() => setViewingDoc(null)}
+      />
 
       <ConfirmModal
         open={!!deletingDoc}
