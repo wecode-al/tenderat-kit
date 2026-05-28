@@ -9,32 +9,32 @@
 //  - Docs are grouped by category (Ligjore / Financiare / Teknike)
 //  - Sticky right-rail with quick actions (was inline buttons only)
 
-const DOC_GROUPS = [
-  {
-    title: 'Dokumentacioni ligjor',
-    count: 3,
-    docs: [
-      { name: 'Formulari përmbledhës i vetdeklarimit', meta: 'PDF · 840 KB · Ngarkuar 12/03/2026' },
-      { name: 'Dëshmia e penalitetit',                 meta: 'PDF · 1.2 MB · Ngarkuar 12/03/2026' },
-      { name: 'Vërtetim i gjendjes gjyqësore',         meta: 'PDF · 620 KB · Ngarkuar 11/03/2026' },
-    ],
-  },
-  {
-    title: 'Dokumentacioni financiar',
-    count: 2,
-    docs: [
-      { name: 'Sigurimet shoqërore',   meta: 'PDF · 312 KB · Ngarkuar 09/03/2026' },
-      { name: 'Bilanc financiar 2025', meta: 'XLSX · 48 KB · Ngarkuar 09/03/2026' },
-    ],
-  },
-  {
-    title: 'Dokumentacioni teknik',
-    count: 1,
-    docs: [
-      { name: 'Kontratë për mbështetje kapacitetesh', meta: 'PDF · 2.1 MB · Ngarkuar 06/03/2026' },
-    ],
-  },
+// Etiketat e kategorive — të njëjta me ato te wizard-i.
+const CATEGORY_LABELS = {
+  ligjor:    'Dokumentacioni ligjor',
+  financiar: 'Dokumentacioni financiar',
+  teknik:    'Dokumentacioni teknik',
+};
+const CATEGORY_ORDER = ['ligjor', 'financiar', 'teknik'];
+
+// Fallback për dosje pa `documents[]` (kompatibilitet me thirrjet ekzistuese).
+const LEGACY_DOCS = [
+  { category: 'ligjor',    name: 'Formulari përmbledhës i vetdeklarimit', meta: 'PDF · 840 KB · Ngarkuar 12/03/2026', partnerId: null },
+  { category: 'ligjor',    name: 'Dëshmia e penalitetit',                 meta: 'PDF · 1.2 MB · Ngarkuar 12/03/2026', partnerId: null },
+  { category: 'ligjor',    name: 'Vërtetim i gjendjes gjyqësore',         meta: 'PDF · 620 KB · Ngarkuar 11/03/2026', partnerId: null },
+  { category: 'financiar', name: 'Sigurimet shoqërore',                   meta: 'PDF · 312 KB · Ngarkuar 09/03/2026', partnerId: null },
+  { category: 'financiar', name: 'Bilanc financiar 2025',                 meta: 'XLSX · 48 KB · Ngarkuar 09/03/2026', partnerId: null },
+  { category: 'teknik',    name: 'Kontratë për mbështetje kapacitetesh',  meta: 'PDF · 2.1 MB · Ngarkuar 06/03/2026', partnerId: null },
 ];
+
+// Paletë e qëndrueshme ngjyrash — e njëjta me atë te `KrijoDosjeNew.jsx`/preventivi
+// (që dosja, wizard-i dhe preventivi të kenë të njëjtin ngjyrim për të njëjtin partner).
+const D_PARTNER_COLORS = ['#E8772E', '#2563EB', '#0F9D58', '#9333EA', '#DB2777', '#0891B2'];
+const dPartnerColor = (i) => D_PARTNER_COLORS[((i % D_PARTNER_COLORS.length) + D_PARTNER_COLORS.length) % D_PARTNER_COLORS.length];
+const dShortName = (p) => {
+  const n = (p && p.name) || (p && p.isSelf ? 'Kompania ime' : 'Partneri');
+  return String(n).replace(/\s*(sh\.?p\.?k\.?|sh\.?a\.?|ltd\.?)\s*$/i, '').trim() || n;
+};
 
 const DOC_STATUS = {
   uploaded: { label: 'Ngarkuar',   cls: 'is-ok',     icon: 'check_circle' },
@@ -65,7 +65,8 @@ function FactTile({ icon, label, value, accent, wide }) {
   );
 }
 
-function DocRow({ doc, onDelete }) {
+function DocRow({ doc, partnerById, showCompany, onDelete }) {
+  const partner = doc.partnerId ? partnerById[doc.partnerId] : null;
   return (
     <div className="d-doc-row">
       <div className="d-doc-tile">
@@ -75,6 +76,19 @@ function DocRow({ doc, onDelete }) {
         <span className="d-doc-name">{doc.name}</span>
         <span className="d-doc-meta">{doc.meta}</span>
       </div>
+      {showCompany && (
+        partner ? (
+          <span className="d-doc-company" style={{ '--pc': dPartnerColor(partner.idx) }}>
+            <i className="d-doc-dot" />
+            {dShortName(partner)}
+          </span>
+        ) : (
+          <span className="d-doc-company is-shared" title="I përbashkët për dosjen">
+            <span className="material-icons">groups</span>
+            E përbashkët
+          </span>
+        )
+      )}
       <button className="d-doc-action" title="Shiko dokumentin">
         <span className="material-icons">visibility</span>
       </button>
@@ -120,12 +134,63 @@ function DossierDetailInline({ dossier, embedded = false }) {
   const [addOpen, setAddOpen] = React.useState(false);
   const [deletingDoc, setDeletingDoc] = React.useState(null);
   const [removed, setRemoved] = React.useState(() => new Set());
+  const [partnerFilter, setPartnerFilter] = React.useState('all'); // 'all' | 'shared' | partnerId
 
-  const visibleGroups = DOC_GROUPS.map((g, gi) => ({
-    ...g,
-    docs: g.docs.filter((_, di) => !removed.has(gi + ':' + di)),
-  }));
+  // Lloji + kompanitë — derivohen nga dosja. Fallback për dosjet e vjetra mock.
+  const lloji = d.lloji || 'Pjesëmarrje e vetme';
+  const companies = Array.isArray(d.companies) ? d.companies : [];
+  const isMulti = (lloji === (window.PARTICIPATION_TYPES?.SUPPORT || 'Mbështetje në kapacitetet e të tjerëve') ||
+                   lloji === (window.PARTICIPATION_TYPES?.JOINT   || 'Bashkim operatorësh ekonomikë'))
+                  && companies.length >= 2;
+
+  const partnerById = React.useMemo(() => {
+    const m = {};
+    companies.forEach((p, i) => { m[p.id] = { ...p, idx: i }; });
+    return m;
+  }, [companies]);
+
+  // Burimi i dokumenteve: dossier.documents nëse ekziston, përndryshe seed legacy.
+  const allDocs = React.useMemo(
+    () => Array.isArray(d.documents) ? d.documents : LEGACY_DOCS,
+    [d.documents]
+  );
+
+  // Apliko filtrin (vetëm kur isMulti — përndryshe filtri injorohet).
+  const filteredDocs = React.useMemo(() => {
+    if (!isMulti || partnerFilter === 'all') return allDocs;
+    if (partnerFilter === 'shared') return allDocs.filter((x) => !x.partnerId);
+    return allDocs.filter((x) => x.partnerId === partnerFilter);
+  }, [allDocs, partnerFilter, isMulti]);
+
+  // Ndërto grupet sipas kategorisë; aplikon edhe maskën `removed` (sipas id-it doc.name+idx orig).
+  const docKey = (doc) => doc.category + ':' + doc.name + ':' + (doc.partnerId || 'shared');
+  const visibleGroups = React.useMemo(() => {
+    const byCat = {};
+    filteredDocs.forEach((doc) => {
+      if (removed.has(docKey(doc))) return;
+      const cat = doc.category || 'ligjor';
+      if (!byCat[cat]) byCat[cat] = [];
+      byCat[cat].push(doc);
+    });
+    return CATEGORY_ORDER.filter((cat) => byCat[cat] && byCat[cat].length).map((cat) => ({
+      key: cat,
+      title: CATEGORY_LABELS[cat] || cat,
+      docs: byCat[cat],
+    }));
+  }, [filteredDocs, removed]);
+
   const total = visibleGroups.reduce((a, g) => a + g.docs.length, 0);
+
+  // Numrat te chips — të bazuar te dokumentet aktuale (jo te filtri aktiv).
+  const counts = React.useMemo(() => {
+    const c = { all: allDocs.length, shared: 0 };
+    companies.forEach((p) => { c[p.id] = 0; });
+    allDocs.forEach((doc) => {
+      if (!doc.partnerId) c.shared += 1;
+      else if (c[doc.partnerId] != null) c[doc.partnerId] += 1;
+    });
+    return c;
+  }, [allDocs, companies]);
 
   return (
     <>
@@ -150,7 +215,7 @@ function DossierDetailInline({ dossier, embedded = false }) {
         <FactTile icon="tag"             label="Referenca"                    value={d.reference || 'REF-2026-0118'} />
         <FactTile icon="gavel"           label="Procedura"                    value="Procedurë e hapur" />
         <FactTile icon="description"     label="Lloji i kontratës"            value="Punë" />
-        <FactTile icon="groups"          label="Lloji i dosjes së pjesëmarrjes" value="Mbështetje në kapacitetet e të tjerëve" wide />
+        <FactTile icon="groups"          label="Lloji i dosjes së pjesëmarrjes" value={lloji} wide />
         <FactTile icon="event"           label="Grafiku i autoritetit"        value="20/01/2026 – 30/06/2026" />
         <FactTile icon="label"           label="Nr. reference i autoritetit"  value="AK-2026-118" />
         <FactTile icon="shield"          label="Garancia e objektit"          value="240 000 ALL" />
@@ -167,31 +232,61 @@ function DossierDetailInline({ dossier, embedded = false }) {
         <OutlineButton icon="add" onClick={() => setAddOpen(true)}>Shto dokument</OutlineButton>
       </div>
 
+      {isMulti && (
+        <div className="d-doc-filters" role="tablist" aria-label="Filtro sipas kompanisë">
+          <button
+            type="button"
+            className={'d-doc-filter' + (partnerFilter === 'all' ? ' is-on' : '')}
+            onClick={() => setPartnerFilter('all')}>
+            Të gjitha <b>{counts.all}</b>
+          </button>
+          {companies.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              className={'d-doc-filter d-doc-filter-partner' + (partnerFilter === p.id ? ' is-on' : '')}
+              style={{ '--pc': dPartnerColor(i) }}
+              onClick={() => setPartnerFilter(p.id)}>
+              <i className="d-doc-dot" /> {dShortName(p)} <b>{counts[p.id] || 0}</b>
+            </button>
+          ))}
+          {counts.shared > 0 && (
+            <button
+              type="button"
+              className={'d-doc-filter d-doc-filter-shared' + (partnerFilter === 'shared' ? ' is-on' : '')}
+              onClick={() => setPartnerFilter('shared')}>
+              <span className="material-icons">groups</span> Të përbashkëta <b>{counts.shared}</b>
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="d-groups">
-        {visibleGroups.map((g, gi) => (
-          g.docs.length === 0 ? null : (
-            <section key={gi} className="d-group">
-              <header className="d-group-head">
-                <h3>{g.title}</h3>
-                <span className="d-group-count">{g.docs.length}</span>
-              </header>
-              <div className="d-group-body">
-                {g.docs.map((doc, di) => (
-                  <DocRow
-                    key={gi + ':' + doc.name + ':' + di}
-                    doc={doc}
-                    onDelete={() => {
-                      const origIndex = DOC_GROUPS[gi].docs.findIndex(
-                        (d2, k) => d2.name === doc.name && !removed.has(gi + ':' + k)
-                      );
-                      setDeletingDoc({ gi, di: origIndex, name: doc.name });
-                    }}
-                  />
-                ))}
-              </div>
-            </section>
-          )
+        {visibleGroups.map((g) => (
+          <section key={g.key} className="d-group">
+            <header className="d-group-head">
+              <h3>{g.title}</h3>
+              <span className="d-group-count">{g.docs.length}</span>
+            </header>
+            <div className="d-group-body">
+              {g.docs.map((doc) => (
+                <DocRow
+                  key={docKey(doc)}
+                  doc={doc}
+                  partnerById={partnerById}
+                  showCompany={isMulti}
+                  onDelete={() => setDeletingDoc({ key: docKey(doc), name: doc.name })}
+                />
+              ))}
+            </div>
+          </section>
         ))}
+        {total === 0 && (
+          <div className="d-group d-group-empty">
+            <span className="material-icons">search_off</span>
+            <p>Nuk ka dokumente që përputhen me filtrin.</p>
+          </div>
+        )}
       </div>
 
       <AddDocumentDrawer open={addOpen} onClose={() => setAddOpen(false)} />
@@ -202,7 +297,7 @@ function DossierDetailInline({ dossier, embedded = false }) {
         onCancel={() => setDeletingDoc(null)}
         onConfirm={() => {
           if (deletingDoc) {
-            setRemoved(prev => new Set(prev).add(deletingDoc.gi + ':' + deletingDoc.di));
+            setRemoved(prev => new Set(prev).add(deletingDoc.key));
           }
           setDeletingDoc(null);
         }}

@@ -387,4 +387,89 @@
   .d-facts { grid-template-columns: 1fr; }
 }
 
+/* ============================================================
+   Dokumentet per-Kompani (Bashkim / Mbështetje)
+   Filtra chips + badge kompanie te çdo rresht dokumenti.
+   ============================================================ */
+
+/* Pika me ngjyrën e partnerit — e ndarë nga ajo te preventivi që të mos prishet. */
+.d-doc-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--pc, #999);
+  flex: none;
+  display: inline-block;
+}
+
+/* Rreshti i filtrave — chips të vegjël si te editori i preventivit. */
+.d-doc-filters {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  margin: 6px 0 12px;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  background: #F8FAFC;
+  align-self: flex-start;
+}
+.d-doc-filter {
+  border: 0;
+  background: transparent;
+  padding: 7px 11px;
+  border-radius: 8px;
+  font: 500 12.5px/1 Inter, system-ui, sans-serif;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.d-doc-filter b {
+  font-weight: 700;
+  color: #1E293B;
+  font-variant-numeric: tabular-nums;
+}
+.d-doc-filter.is-on {
+  background: #FFFFFF;
+  color: #1E293B;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.d-doc-filter-shared .material-icons { font-size: 16px; color: #64748B; }
+
+/* Badge kompanie në rreshtin e dokumentit. */
+.d-doc-company {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font: 600 11.5px/1 Inter, system-ui, sans-serif;
+  color: #1E293B;
+  background: color-mix(in srgb, var(--pc, #94A3B8) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--pc, #94A3B8) 30%, white);
+  white-space: nowrap;
+  flex: none;
+}
+.d-doc-company.is-shared {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+.d-doc-company.is-shared .material-icons { font-size: 14px !important; color: #64748B; }
+
+/* Mbushje boshe kur filtri prodhon zero rezultate. */
+.d-group-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  color: #64748B;
+  text-align: center;
+}
+.d-group-empty .material-icons { font-size: 32px; color: #94A3B8; }
+.d-group-empty p { margin: 0; font: 13px/1.4 Inter, system-ui, sans-serif; }
+
 /* ---------- Generic confirm modal ---------- */

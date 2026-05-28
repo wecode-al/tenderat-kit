@@ -177,10 +177,24 @@ function App() {
   })();
   const [screen, setScreenState] = React.useState(initial);
   const [active, setActive] = React.useState(null);
+  // Lista e dosjeve mbahet te App që dosjet e reja nga wizard-i të persistojnë.
+  const [dossiers, setDossiers] = React.useState(() => (window.SAMPLE_DOSSIERS || []).slice());
 
   const setScreen = (s) => {
     setScreenState(s);
     try {localStorage.setItem('tenderat-kit-screen', s);} catch {}
+  };
+
+  // Pas mbarimit të wizard-it: konverto formën në dosje, push-o në listë, hap detail-in.
+  const handleWizardDone = ({ form, selectedDocs } = {}) => {
+    if (typeof window.dossierFromForm !== 'function') {
+      setScreen('grid');
+      return;
+    }
+    const newDossier = window.dossierFromForm(form, selectedDocs);
+    setDossiers((prev) => [newDossier, ...prev]);
+    setActive(newDossier);
+    setScreen('grid');
   };
 
   const onNav = (key) => {
@@ -230,6 +244,7 @@ function App() {
       view =
       <div className="t-app">
             <DashboardGrid
+          dossiers={dossiers}
           onOpen={(d) => {setActive(d);setScreen('detail');}}
           onCreate={() => setScreen('krijo')}
           onNav={onNav} />
@@ -261,7 +276,7 @@ function App() {
             <KrijoDosjeNew
           onBack={() => setScreen('grid')}
           onCancel={() => setScreen('grid')}
-          onNext={() => alert('Hapi 2 — Dokumentacioni (ardhëja e ardhshme)')}
+          onNext={handleWizardDone}
           onNav={onNav} />
 
           </div>;

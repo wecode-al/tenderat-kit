@@ -1,6 +1,27 @@
 // Dashboard — populated dossier grid ("Dosjet e Mia").
 // Polished variant with summary stats, filter toolbar, and richer cards.
 
+// Konstanta për llojin e pjesëmarrjes — të njëjtat vlera me ato te wizard-i.
+const PARTICIPATION_TYPES = {
+  SOLO:     'Pjesëmarrje e vetme',
+  SUPPORT:  'Mbështetje në kapacitetet e të tjerëve',
+  JOINT:    'Bashkim operatorësh ekonomikë',
+};
+window.PARTICIPATION_TYPES = PARTICIPATION_TYPES;
+
+// Helper për dokumentet seed — i mban deklarimet mock konçize.
+const _d = (category, name, meta, partnerId = null) => ({ category, name, meta, partnerId });
+
+// Dokumentet bazë për një dosje me Pjesëmarrje të vetme (partnerId null = i përbashkët).
+const SOLO_DOCS = [
+  _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026'),
+  _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026'),
+  _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026'),
+  _d('financiar', 'Sigurimet shoqërore',                   'PDF · 312 KB · Ngarkuar 09/03/2026'),
+  _d('financiar', 'Bilanc financiar 2025',                 'XLSX · 48 KB · Ngarkuar 09/03/2026'),
+  _d('teknik',    'Kontratë për mbështetje kapacitetesh',  'PDF · 2.1 MB · Ngarkuar 06/03/2026'),
+];
+
 const SAMPLE_DOSSIERS = [
   {
     id: 'd5', title: 'Blerje lëndë djegëse për flotën',
@@ -8,6 +29,21 @@ const SAMPLE_DOSSIERS = [
     statusKey: 'draft', statusLabel: 'Draft',
     fondi: '18 750 000 ALL', closingDate: '15/05/2026', daysLeft: 27,
     docsDone: 1, docsTotal: 12, createdAt: '18/04/2026',
+    lloji: PARTICIPATION_TYPES.SUPPORT,
+    companies: [
+      { id: 'self', name: 'Albkons SH.P.K.', percent: 100, isSelf: true, role: 'Pjesëmarrës' },
+      { id: 's1',   name: 'EnergoTech SH.P.K.', percent: 0, isSelf: false, role: 'Mbështetës' },
+    ],
+    documents: [
+      _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026', 'self'),
+      _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026', 'self'),
+      _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026', 'self'),
+      _d('ligjor',    'Vetdeklarim — mbështetësi',             'PDF · 720 KB · Ngarkuar 11/03/2026', 's1'),
+      _d('ligjor',    'Dëshmi penaliteti — EnergoTech',        'PDF · 1.0 MB · Ngarkuar 11/03/2026', 's1'),
+      _d('financiar', 'Sigurimet shoqërore — Albkons',         'PDF · 312 KB · Ngarkuar 09/03/2026', 'self'),
+      _d('financiar', 'Bilanc financiar 2025 — EnergoTech',    'XLSX · 56 KB · Ngarkuar 09/03/2026', 's1'),
+      _d('teknik',    'Kontratë për mbështetje kapacitetesh',  'PDF · 2.1 MB · Ngarkuar 06/03/2026', null),
+    ],
   },
   {
     id: 'd1', title: 'Ndërtimi i rrugës rurale — Loti 4',
@@ -15,6 +51,23 @@ const SAMPLE_DOSSIERS = [
     statusKey: 'submitted', statusLabel: 'Dorëzuar',
     fondi: '82 400 000 ALL', closingDate: '22/04/2026', daysLeft: 4,
     docsDone: 14, docsTotal: 15, createdAt: '02/04/2026',
+    lloji: PARTICIPATION_TYPES.JOINT,
+    companies: [
+      { id: 'self', name: 'Albkons SH.P.K.',  percent: 20, isSelf: true,  role: 'Anëtar' },
+      { id: 'p2',   name: 'Energo SH.P.K.',   percent: 80, isSelf: false, role: 'Lider' },
+    ],
+    documents: [
+      _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026', 'self'),
+      _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026', 'self'),
+      _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026', 'self'),
+      _d('ligjor',    'Vetdeklarim — Energo',                  'PDF · 870 KB · Ngarkuar 10/03/2026', 'p2'),
+      _d('ligjor',    'Dëshmi penaliteti — Energo',            'PDF · 1.1 MB · Ngarkuar 10/03/2026', 'p2'),
+      _d('financiar', 'Sigurimet shoqërore — Albkons',         'PDF · 312 KB · Ngarkuar 09/03/2026', 'self'),
+      _d('financiar', 'Bilanc financiar 2025 — Albkons',       'XLSX · 48 KB · Ngarkuar 09/03/2026', 'self'),
+      _d('financiar', 'Bilanc financiar 2025 — Energo',        'XLSX · 64 KB · Ngarkuar 09/03/2026', 'p2'),
+      _d('teknik',    'Marrëveshje bashkimi operatorësh',      'PDF · 2.4 MB · Ngarkuar 08/03/2026', null),
+      _d('teknik',    'Preventivi i unifikuar',                'XLSX · 120 KB · Ngarkuar 14/03/2026', null),
+    ],
   },
   {
     id: 'd4', title: 'Shërbime konsulence strategjike 2026',
@@ -22,6 +75,9 @@ const SAMPLE_DOSSIERS = [
     statusKey: 'submitted', statusLabel: 'Dorëzuar',
     fondi: '3 200 000 ALL', closingDate: '28/04/2026', daysLeft: 10,
     docsDone: 2, docsTotal: 7, createdAt: '08/04/2026',
+    lloji: PARTICIPATION_TYPES.SOLO,
+    companies: [{ id: 'self', name: 'Albkons SH.P.K.', percent: 100, isSelf: true }],
+    documents: SOLO_DOCS,
   },
   {
     id: 'd2', title: 'Furnizim pajisje ZK',
@@ -29,6 +85,9 @@ const SAMPLE_DOSSIERS = [
     statusKey: 'submitted', statusLabel: 'Dorëzuar',
     fondi: '12 400 000 ALL', closingDate: '30/06/2026', daysLeft: 73,
     docsDone: 6, docsTotal: 8, createdAt: '15/04/2026',
+    lloji: PARTICIPATION_TYPES.SOLO,
+    companies: [{ id: 'self', name: 'Albkons SH.P.K.', percent: 100, isSelf: true }],
+    documents: SOLO_DOCS,
   },
   {
     id: 'd3', title: 'Mirëmbajtje ambienti dhe gjelbërim',
@@ -36,6 +95,9 @@ const SAMPLE_DOSSIERS = [
     statusKey: 'closed', statusLabel: 'Mbyllur',
     fondi: '4 800 000 ALL', closingDate: '02/03/2026', daysLeft: 0,
     docsDone: 22, docsTotal: 22, createdAt: '10/02/2026',
+    lloji: PARTICIPATION_TYPES.SOLO,
+    companies: [{ id: 'self', name: 'Albkons SH.P.K.', percent: 100, isSelf: true }],
+    documents: SOLO_DOCS,
   },
   {
     id: 'd6', title: 'Rikonstruksion çerdhe nr. 12',
@@ -43,6 +105,9 @@ const SAMPLE_DOSSIERS = [
     statusKey: 'closed', statusLabel: 'Mbyllur',
     fondi: '24 100 000 ALL', closingDate: '12/01/2026', daysLeft: -96,
     docsDone: 18, docsTotal: 18, createdAt: '22/12/2025',
+    lloji: PARTICIPATION_TYPES.SOLO,
+    companies: [{ id: 'self', name: 'Albkons SH.P.K.', percent: 100, isSelf: true }],
+    documents: SOLO_DOCS,
   },
 ];
 
@@ -53,15 +118,17 @@ const FILTERS = [
   { key: 'closed',     label: 'Mbyllur' },
 ];
 
-function DashboardGrid({ onOpen, onCreate, onNav }) {
+function DashboardGrid({ onOpen, onCreate, onNav, dossiers }) {
   const [filter, setFilter] = React.useState('all');
   const [query, setQuery]   = React.useState('');
   const [sort, setSort]     = React.useState('closing'); // closing | updated | value
   const [removed, setRemoved] = React.useState(() => new Set());
 
+  // Burimi: prop nga App (që mban edhe dosjet e reja nga wizard), fallback te seed-i.
+  const source = dossiers || SAMPLE_DOSSIERS;
   const allRows = React.useMemo(
-    () => SAMPLE_DOSSIERS.filter(d => !removed.has(d.id)),
-    [removed]
+    () => source.filter(d => !removed.has(d.id)),
+    [source, removed]
   );
 
   // Summary stats
@@ -131,8 +198,8 @@ function DashboardGrid({ onOpen, onCreate, onNav }) {
                   {f.label}
                   <span className="t-filter-count">
                     {f.key === 'all'
-                      ? SAMPLE_DOSSIERS.length
-                      : SAMPLE_DOSSIERS.filter(d => d.statusKey === f.key).length}
+                      ? source.length
+                      : source.filter(d => d.statusKey === f.key).length}
                   </span>
                 </button>
               ))}
@@ -224,3 +291,4 @@ function StatTile({ icon, label, value, tone }) {
 }
 
 window.DashboardGrid = DashboardGrid;
+window.SAMPLE_DOSSIERS = SAMPLE_DOSSIERS;

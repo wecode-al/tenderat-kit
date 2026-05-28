@@ -3926,7 +3926,9 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
   const goNext = () => {
     if (preventiviBlocked) return; // zëra pa çmim — mos përparo
     if (step < LAST_STEP) setStep(step + 1);
-    else onNext && onNext();
+    // Te hapi i fundit, dorëzo formën + dokumentet e zgjedhura te parent-i.
+    // Parent-i përdor `window.dossierFromForm` për t'i kthyer në një dosje të re.
+    else onNext && onNext({ form, selectedDocs });
   };
   const goBack = () => {
     if (step > 0) setStep(step - 1);
@@ -4010,5 +4012,86 @@ function KrijoDosjeNew({ onBack, onNav, onNext, onCancel }) {
     </>
   );
 }
+// dossierFromForm(form, selectedDocs) → objekt dosjeje gati për listën "Dosjet e mia".
+// Normalizon partnerët nga consortium / support, ndërton documents[] me partnerId aty ku
+// ka kuptim, dhe gjeneron një id të ri + datë krijimi.
+function dossierFromForm(form, selectedDocs) {
+  const f = form || {};
+  const lloji = f.lloji || 'Pjesëmarrje e vetme';
+  const PT = window.PARTICIPATION_TYPES || {};
+
+  // --- Normalizimi i kompanive sipas llojit ---
+  let companies = [];
+  if (lloji === PT.JOINT) {
+    companies = (f.consortium?.partners || []).map((p) => ({
+      id: p.id, name: p.name || 'Kompania', nipt: p.nipt || '',
+      percent: Number(p.percent) || 0, isSelf: !!p.isSelf,
+      role: p.isSelf ? 'Anëtar' : 'Anëtar',
+    }));
+  } else if (lloji === PT.SUPPORT) {
+    companies = [
+      { id: 'self', name: 'Albkons SH.P.K.', nipt: 'L01234567A', percent: 100, isSelf: true, role: 'Pjesëmarrës' },
+      { id: 'support', name: f.support?.emri || 'Mbështetësi', nipt: f.support?.nipt || '', percent: 0, isSelf: false, role: 'Mbështetës' },
+    ];
+  } else {
+    companies = [{ id: 'self', name: 'Albkons SH.P.K.', nipt: 'L01234567A', percent: 100, isSelf: true }];
+  }
+
+  // --- Dokumentet: nga DOKUMENTACIONI_LIST, sipas selectedDocs + kategorive ---
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const uploadedMeta = `PDF · 240 KB · Ngarkuar ${dd}/${mm}/${today.getFullYear()}`;
+  const picked = new Set(selectedDocs || []);
+  const documents = [];
+
+  (DOKUMENTACIONI_LIST || []).forEach((doc) => {
+    if (!picked.has(doc.id)) return;
+    if (doc.category === 'preventivi' || doc.category === 'metodologjia') return; // trajtohen veç
+    if (companies.length >= 2) {
+      // Per-kompani: çdo dokument ligjor/financiar gjenerohet për secilën kompani.
+      companies.forEach((c) => documents.push({
+        category: doc.category, name: `${doc.name} — ${c.name}`,
+        meta: uploadedMeta, partnerId: c.id,
+      }));
+    } else {
+      documents.push({ category: doc.category, name: doc.name, meta: uploadedMeta, partnerId: null });
+    }
+  });
+
+  // Preventivi + metodologjia janë gjithmonë të përbashkëta në nivel dosjeje.
+  if (f.preventivi?.file) {
+    documents.push({ category: 'teknik', name: 'Preventivi i unifikuar', meta: uploadedMeta, partnerId: null });
+  }
+  if (f.metodologjia?.generated) {
+    documents.push({ category: 'teknik', name: 'Metodologjia e realizimit', meta: uploadedMeta, partnerId: null });
+  }
+  if (lloji === PT.JOINT) {
+    documents.push({ category: 'teknik', name: 'Marrëveshje bashkimi operatorësh', meta: uploadedMeta, partnerId: null });
+  } else if (lloji === PT.SUPPORT) {
+    documents.push({ category: 'teknik', name: 'Kontratë për mbështetje kapacitetesh', meta: uploadedMeta, partnerId: null });
+  }
+
+  const ref = f.referenca || `REF-${today.getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+  return {
+    id: 'new-' + Date.now(),
+    title: f.objekti || 'Dosje e re',
+    authority: f.autoriteti || '—',
+    reference: ref,
+    statusKey: 'draft',
+    statusLabel: 'Draft',
+    fondi: f.fondi ? f.fondi + ' ALL' : '—',
+    closingDate: f.dataMbylljes || '—',
+    daysLeft: 30,
+    docsDone: documents.length,
+    docsTotal: documents.length,
+    createdAt: `${dd}/${mm}/${today.getFullYear()}`,
+    lloji,
+    companies,
+    documents,
+  };
+}
+
 window.KrijoDosjeNew = KrijoDosjeNew;
 window.buildNextPeriod = buildNextPeriod;
+window.dossierFromForm = dossierFromForm;
