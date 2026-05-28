@@ -581,32 +581,6 @@ function CatalogView({ node, onUpload }) {
           <h1 className="cp-dochead-title">{title}</h1>
           <dl className="cp-dochead-meta">
             <div><dt>Ngarkuar</dt><dd>{uploaded}</dd></div>
-            <div><dt>Gjuha origjinale</dt><dd>{original.flag} {original.label}</dd></div>
-            {needsTranslation && (
-              <div className="cp-dochead-translations">
-                <dt>Përkthim</dt>
-                <dd className="cp-trans-chips">
-                  {autoTranslations.map((t) => {
-                    const status = translationStatus[t.code] || 'pending';
-                    const isReady = status === 'ready';
-                    return (
-                      <span
-                        key={t.code}
-                        className={'cp-trans-chip is-' + status}
-                        title={isReady ? 'Përkthimi është gati' : 'Po përkthen…'}>
-                        <span className="cp-trans-chip-flag" aria-hidden>{t.flag}</span>
-                        <span className="cp-trans-chip-label">{t.label}</span>
-                        {isReady ? (
-                          <span className="material-icons cp-trans-chip-icon">check_circle</span>
-                        ) : (
-                          <span className="cp-trans-chip-spinner" aria-hidden />
-                        )}
-                      </span>
-                    );
-                  })}
-                </dd>
-              </div>
-            )}
           </dl>
         </div>
         <div className="cp-dochead-actions">
