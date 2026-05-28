@@ -65,7 +65,7 @@ function FactTile({ icon, label, value, accent, wide }) {
   );
 }
 
-function DocRow({ doc, partnerById, showCompany, onDelete }) {
+function DocRow({ doc, partnerById, showCompany, onEdit, onDelete }) {
   const partner = doc.partnerId ? partnerById[doc.partnerId] : null;
   return (
     <div className="d-doc-row">
@@ -92,7 +92,7 @@ function DocRow({ doc, partnerById, showCompany, onDelete }) {
       <button className="d-doc-action" title="Shiko dokumentin">
         <span className="material-icons">visibility</span>
       </button>
-      <button className="d-doc-action" title="Ndrysho">
+      <button className="d-doc-action" title="Ndrysho" onClick={onEdit}>
         <span className="material-icons">edit</span>
       </button>
       <button className="d-doc-action" title="Shkarko">
@@ -132,9 +132,16 @@ window.ConfirmModal = ConfirmModal;
 function DossierDetailInline({ dossier, embedded = false }) {
   const d = dossier || { title: 'Ndërtimi - Rruga 4', count: 15 };
   const [addOpen, setAddOpen] = React.useState(false);
+  const [editingDoc, setEditingDoc] = React.useState(null);  // dokumenti që po redaktohet ose null
   const [deletingDoc, setDeletingDoc] = React.useState(null);
   const [removed, setRemoved] = React.useState(() => new Set());
   const [partnerFilter, setPartnerFilter] = React.useState('all'); // 'all' | 'shared' | partnerId
+  // Overrides lokale për redaktim (pa propaguar te lista mëma): { _uid: { name?, meta?, partnerId? } }
+  const [overrides, setOverrides] = React.useState(() => ({}));
+  // Snapshot i ndarë i formës së vetëdeklarimit — drawer-i e modifikon këtu kur isVD.
+  const [vdForm, setVdForm] = React.useState(() => ({
+    veteDeklarim: { staff: [], machinery: [], catalogs: [], inline: { staff: {}, machinery: {}, catalogs: {} } },
+  }));
 
   // Lloji + kompanitë — derivohen nga dosja. Fallback për dosjet e vjetra mock.
   const lloji = d.lloji || 'Pjesëmarrje e vetme';
@@ -150,10 +157,15 @@ function DossierDetailInline({ dossier, embedded = false }) {
   }, [companies]);
 
   // Burimi i dokumenteve: dossier.documents nëse ekziston, përndryshe seed legacy.
-  const allDocs = React.useMemo(
-    () => Array.isArray(d.documents) ? d.documents : LEGACY_DOCS,
-    [d.documents]
-  );
+  // Çdo dokument fiton një `_uid` stabël (indeksi në burim) — bazë për overrides + React key.
+  const allDocs = React.useMemo(() => {
+    const src = Array.isArray(d.documents) ? d.documents : LEGACY_DOCS;
+    return src.map((doc, i) => {
+      const uid = '_doc' + i;
+      const patch = overrides[uid] || {};
+      return { ...doc, ...patch, _uid: uid };
+    });
+  }, [d.documents, overrides]);
 
   // Apliko filtrin (vetëm kur isMulti — përndryshe filtri injorohet).
   const filteredDocs = React.useMemo(() => {
@@ -162,8 +174,8 @@ function DossierDetailInline({ dossier, embedded = false }) {
     return allDocs.filter((x) => x.partnerId === partnerFilter);
   }, [allDocs, partnerFilter, isMulti]);
 
-  // Ndërto grupet sipas kategorisë; aplikon edhe maskën `removed` (sipas id-it doc.name+idx orig).
-  const docKey = (doc) => doc.category + ':' + doc.name + ':' + (doc.partnerId || 'shared');
+  // Çelësi i dokumentit për React key + për listën `removed`.
+  const docKey = (doc) => doc._uid || (doc.category + ':' + doc.name + ':' + (doc.partnerId || 'shared'));
   const visibleGroups = React.useMemo(() => {
     const byCat = {};
     filteredDocs.forEach((doc) => {
@@ -275,6 +287,7 @@ function DossierDetailInline({ dossier, embedded = false }) {
                   doc={doc}
                   partnerById={partnerById}
                   showCompany={isMulti}
+                  onEdit={() => setEditingDoc(doc)}
                   onDelete={() => setDeletingDoc({ key: docKey(doc), name: doc.name })}
                 />
               ))}
@@ -290,6 +303,29 @@ function DossierDetailInline({ dossier, embedded = false }) {
       </div>
 
       <AddDocumentDrawer open={addOpen} onClose={() => setAddOpen(false)} />
+
+      {/* Drawer për redaktimin e një dokumenti — mode VD vs file-doc gjykohet brenda. */}
+      {window.EditDocumentDrawer && (
+        <window.EditDocumentDrawer
+          open={!!editingDoc}
+          doc={editingDoc}
+          companies={companies}
+          vdForm={vdForm}
+          setVdForm={(updater) => setVdForm(typeof updater === 'function' ? updater : (prev) => ({ ...prev, ...updater }))}
+          onClose={() => setEditingDoc(null)}
+          onSave={(patch) => {
+            // Apliko patch-in lokalisht — ndryshimi reflektohet menjëherë te lista.
+            if (editingDoc && editingDoc._uid && patch && Object.keys(patch).length) {
+              setOverrides((prev) => ({
+                ...prev,
+                [editingDoc._uid]: { ...(prev[editingDoc._uid] || {}), ...patch },
+              }));
+            }
+            setEditingDoc(null);
+          }}
+        />
+      )}
+
       <ConfirmModal
         open={!!deletingDoc}
         title="Fshi këtë dokument?"

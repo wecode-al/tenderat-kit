@@ -4052,19 +4052,19 @@ function dossierFromForm(form, selectedDocs) {
       // Per-kompani: çdo dokument ligjor/financiar gjenerohet për secilën kompani.
       companies.forEach((c) => documents.push({
         category: doc.category, name: `${doc.name} — ${c.name}`,
-        meta: uploadedMeta, partnerId: c.id,
+        meta: uploadedMeta, partnerId: c.id, docId: doc.id,
       }));
     } else {
-      documents.push({ category: doc.category, name: doc.name, meta: uploadedMeta, partnerId: null });
+      documents.push({ category: doc.category, name: doc.name, meta: uploadedMeta, partnerId: null, docId: doc.id });
     }
   });
 
   // Preventivi + metodologjia janë gjithmonë të përbashkëta në nivel dosjeje.
   if (f.preventivi?.file) {
-    documents.push({ category: 'teknik', name: 'Preventivi i unifikuar', meta: uploadedMeta, partnerId: null });
+    documents.push({ category: 'teknik', name: 'Preventivi i unifikuar', meta: uploadedMeta, partnerId: null, docId: 'preventivi-bosh' });
   }
   if (f.metodologjia?.generated) {
-    documents.push({ category: 'teknik', name: 'Metodologjia e realizimit', meta: uploadedMeta, partnerId: null });
+    documents.push({ category: 'teknik', name: 'Metodologjia e realizimit', meta: uploadedMeta, partnerId: null, docId: 'metodologjia' });
   }
   if (lloji === PT.JOINT) {
     documents.push({ category: 'teknik', name: 'Marrëveshje bashkimi operatorësh', meta: uploadedMeta, partnerId: null });
@@ -4095,3 +4095,5 @@ function dossierFromForm(form, selectedDocs) {
 window.KrijoDosjeNew = KrijoDosjeNew;
 window.buildNextPeriod = buildNextPeriod;
 window.dossierFromForm = dossierFromForm;
+// Eksporto VeteDeklarimForm që EditDocumentDrawer t'a ripofrdor brenda drawer-it.
+window.VeteDeklarimForm = VeteDeklarimForm;

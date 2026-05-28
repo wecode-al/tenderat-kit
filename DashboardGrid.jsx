@@ -9,16 +9,19 @@ const PARTICIPATION_TYPES = {
 };
 window.PARTICIPATION_TYPES = PARTICIPATION_TYPES;
 
-// Helper për dokumentet seed — i mban deklarimet mock konçize.
-const _d = (category, name, meta, partnerId = null) => ({ category, name, meta, partnerId });
+// Helper për dokumentet seed. `docId` (opsional) lidhet me DOKUMENTACIONI_LIST te wizard-i
+// dhe i tregon EditDocumentDrawer-it se cili lloj editor të hapet (p.sh. vete-deklarim → form,
+// përndryshe → file-doc me ngarkim + emër + kompani).
+const _d = (category, name, meta, partnerId = null, docId = null) =>
+  ({ category, name, meta, partnerId, docId });
 
 // Dokumentet bazë për një dosje me Pjesëmarrje të vetme (partnerId null = i përbashkët).
 const SOLO_DOCS = [
-  _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026'),
-  _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026'),
-  _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026'),
-  _d('financiar', 'Sigurimet shoqërore',                   'PDF · 312 KB · Ngarkuar 09/03/2026'),
-  _d('financiar', 'Bilanc financiar 2025',                 'XLSX · 48 KB · Ngarkuar 09/03/2026'),
+  _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026', null, 'vete-deklarim'),
+  _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026', null, 'konflikt'),
+  _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026', null, 'kriteret'),
+  _d('financiar', 'Sigurimet shoqërore',                   'PDF · 312 KB · Ngarkuar 09/03/2026', null, 'pasqyra'),
+  _d('financiar', 'Bilanc financiar 2025',                 'XLSX · 48 KB · Ngarkuar 09/03/2026', null, 'bilanci'),
   _d('teknik',    'Kontratë për mbështetje kapacitetesh',  'PDF · 2.1 MB · Ngarkuar 06/03/2026'),
 ];
 
@@ -35,13 +38,13 @@ const SAMPLE_DOSSIERS = [
       { id: 's1',   name: 'EnergoTech SH.P.K.', percent: 0, isSelf: false, role: 'Mbështetës' },
     ],
     documents: [
-      _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026', 'self'),
-      _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026', 'self'),
-      _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026', 'self'),
-      _d('ligjor',    'Vetdeklarim — mbështetësi',             'PDF · 720 KB · Ngarkuar 11/03/2026', 's1'),
-      _d('ligjor',    'Dëshmi penaliteti — EnergoTech',        'PDF · 1.0 MB · Ngarkuar 11/03/2026', 's1'),
-      _d('financiar', 'Sigurimet shoqërore — Albkons',         'PDF · 312 KB · Ngarkuar 09/03/2026', 'self'),
-      _d('financiar', 'Bilanc financiar 2025 — EnergoTech',    'XLSX · 56 KB · Ngarkuar 09/03/2026', 's1'),
+      _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026', 'self', 'vete-deklarim'),
+      _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026', 'self', 'konflikt'),
+      _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026', 'self', 'kriteret'),
+      _d('ligjor',    'Vetdeklarim — mbështetësi',             'PDF · 720 KB · Ngarkuar 11/03/2026', 's1',   'vete-deklarim'),
+      _d('ligjor',    'Dëshmi penaliteti — EnergoTech',        'PDF · 1.0 MB · Ngarkuar 11/03/2026', 's1',   'konflikt'),
+      _d('financiar', 'Sigurimet shoqërore — Albkons',         'PDF · 312 KB · Ngarkuar 09/03/2026', 'self', 'pasqyra'),
+      _d('financiar', 'Bilanc financiar 2025 — EnergoTech',    'XLSX · 56 KB · Ngarkuar 09/03/2026', 's1',   'bilanci'),
       _d('teknik',    'Kontratë për mbështetje kapacitetesh',  'PDF · 2.1 MB · Ngarkuar 06/03/2026', null),
     ],
   },
@@ -57,16 +60,16 @@ const SAMPLE_DOSSIERS = [
       { id: 'p2',   name: 'Energo SH.P.K.',   percent: 80, isSelf: false, role: 'Lider' },
     ],
     documents: [
-      _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026', 'self'),
-      _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026', 'self'),
-      _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026', 'self'),
-      _d('ligjor',    'Vetdeklarim — Energo',                  'PDF · 870 KB · Ngarkuar 10/03/2026', 'p2'),
-      _d('ligjor',    'Dëshmi penaliteti — Energo',            'PDF · 1.1 MB · Ngarkuar 10/03/2026', 'p2'),
-      _d('financiar', 'Sigurimet shoqërore — Albkons',         'PDF · 312 KB · Ngarkuar 09/03/2026', 'self'),
-      _d('financiar', 'Bilanc financiar 2025 — Albkons',       'XLSX · 48 KB · Ngarkuar 09/03/2026', 'self'),
-      _d('financiar', 'Bilanc financiar 2025 — Energo',        'XLSX · 64 KB · Ngarkuar 09/03/2026', 'p2'),
+      _d('ligjor',    'Formulari përmbledhës i vetdeklarimit', 'PDF · 840 KB · Ngarkuar 12/03/2026', 'self', 'vete-deklarim'),
+      _d('ligjor',    'Dëshmia e penalitetit',                 'PDF · 1.2 MB · Ngarkuar 12/03/2026', 'self', 'konflikt'),
+      _d('ligjor',    'Vërtetim i gjendjes gjyqësore',         'PDF · 620 KB · Ngarkuar 11/03/2026', 'self', 'kriteret'),
+      _d('ligjor',    'Vetdeklarim — Energo',                  'PDF · 870 KB · Ngarkuar 10/03/2026', 'p2',   'vete-deklarim'),
+      _d('ligjor',    'Dëshmi penaliteti — Energo',            'PDF · 1.1 MB · Ngarkuar 10/03/2026', 'p2',   'konflikt'),
+      _d('financiar', 'Sigurimet shoqërore — Albkons',         'PDF · 312 KB · Ngarkuar 09/03/2026', 'self', 'pasqyra'),
+      _d('financiar', 'Bilanc financiar 2025 — Albkons',       'XLSX · 48 KB · Ngarkuar 09/03/2026', 'self', 'bilanci'),
+      _d('financiar', 'Bilanc financiar 2025 — Energo',        'XLSX · 64 KB · Ngarkuar 09/03/2026', 'p2',   'bilanci'),
       _d('teknik',    'Marrëveshje bashkimi operatorësh',      'PDF · 2.4 MB · Ngarkuar 08/03/2026', null),
-      _d('teknik',    'Preventivi i unifikuar',                'XLSX · 120 KB · Ngarkuar 14/03/2026', null),
+      _d('teknik',    'Preventivi i unifikuar',                'XLSX · 120 KB · Ngarkuar 14/03/2026', null,   'preventivi-bosh'),
     ],
   },
   {
