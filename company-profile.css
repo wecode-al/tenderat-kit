@@ -575,13 +575,48 @@
 }
 .add-staff-doc {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 36px 1fr auto auto;
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
   border: 1px solid var(--t-border-200);
   border-radius: 8px;
   background: var(--t-white);
+}
+
+/* "Skadon më" — input data per-doc. Vertikal: etiketa e vogël sipër input-it. */
+.add-staff-doc-expires {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+  color: var(--t-fg-2);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.add-staff-doc-expires-lbl { font-weight: 600; line-height: 1; }
+.add-staff-doc-expires input[type="date"] {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--t-fg-1);
+  padding: 5px 8px;
+  border: 1px solid var(--t-border-200);
+  border-radius: 6px;
+  background: var(--t-white);
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: inherit;
+  min-width: 140px;
+}
+.add-staff-doc-expires input[type="date"]:hover { border-color: var(--t-fg-2); }
+.add-staff-doc-expires input[type="date"]:focus {
+  outline: none;
+  border-color: var(--t-brand, #FF8400);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--t-brand, #FF8400) 18%, transparent);
+}
+.add-staff-doc.is-filled .add-staff-doc-expires input[type="date"] {
+  border-color: rgba(46,139,75,0.35);
 }
 .add-staff-doc.is-filled {
   border-color: rgba(46,139,75,0.35);

@@ -380,10 +380,34 @@ function MachineForm({ onChange, initial }) {
       tatimore: 'Deklarata_tatimore.pdf',
       noteriale: 'Kontrata_noteriale.pdf',
     };
-    setFiles((cur) => ({ ...cur, [key]: { name: names[key] || 'Skedari.pdf' } }));
+    setFiles((cur) => ({
+      ...cur,
+      [key]: { ...(cur[key] || {}), name: names[key] || 'Skedari.pdf' },
+    }));
   }
   function removeFile(key) {
-    setFiles((cur) => { const n = { ...cur }; delete n[key]; return n; });
+    setFiles((cur) => {
+      const n = { ...cur };
+      // Mbaj datën e skadencës edhe nëse useri heq file-in — që ta rivendosë pa e rishkruar.
+      if (n[key]) n[key] = { expires: n[key].expires };
+      // Nëse s'mbeti asgjë e dobishme, hiqe krejt.
+      if (n[key] && !n[key].expires) delete n[key];
+      return n;
+    });
+  }
+  function setExpires(key, value) {
+    setFiles((cur) => {
+      const n = { ...cur };
+      if (!value) {
+        if (n[key]) {
+          if (n[key].name) n[key] = { name: n[key].name };
+          else delete n[key];
+        }
+      } else {
+        n[key] = { ...(n[key] || {}), expires: value };
+      }
+      return n;
+    });
   }
 
   return (
@@ -438,24 +462,34 @@ function MachineForm({ onChange, initial }) {
         <div className="add-staff-docs-head">
           <span className="add-iso-label">Dokumente të bashkangjitura</span>
           <span className="add-staff-docs-count">
-            {Object.keys(files).filter((k) => docs.some((d) => d.key === k)).length}/{docs.length}
+            {docs.filter((d) => files[d.key] && files[d.key].name).length}/{docs.length}
           </span>
         </div>
         <div className="add-staff-docs">
           {docs.map((d) => {
             const f = files[d.key];
+            const hasFile = !!(f && f.name);
+            const expires = (f && f.expires) || '';
             return (
-              <div key={d.key} className={'add-staff-doc' + (f ? ' is-filled' : '')}>
+              <div key={d.key} className={'add-staff-doc' + (hasFile ? ' is-filled' : '')}>
                 <div className="add-staff-doc-icon">
-                  <span className="material-icons">{f ? 'description' : 'upload_file'}</span>
+                  <span className="material-icons">{hasFile ? 'description' : 'upload_file'}</span>
                 </div>
                 <div className="add-staff-doc-main">
                   <div className="add-staff-doc-label">{d.label}</div>
-                  {f
+                  {hasFile
                     ? <div className="add-staff-doc-file">{f.name}</div>
                     : <div className="add-staff-doc-hint">{d.hint || 'PDF, deri 20 MB'}</div>}
                 </div>
-                {f
+                <label className="add-staff-doc-expires" title="Datë skadence">
+                  <span className="add-staff-doc-expires-lbl">Skadon më</span>
+                  <input
+                    type="date"
+                    value={expires}
+                    onChange={(e) => setExpires(d.key, e.target.value)}
+                  />
+                </label>
+                {hasFile
                   ? <button type="button" className="add-staff-doc-x" onClick={() => removeFile(d.key)} aria-label="Hiq">
                       <span className="material-icons">close</span>
                     </button>
